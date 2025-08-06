@@ -1,0 +1,9 @@
+/ChatbotAPI/
+/SuggestionBox/
+/vendor/
+.env
+composer.json
+composer.lock
+chatbot2.js
+ecg2.js
+test.php

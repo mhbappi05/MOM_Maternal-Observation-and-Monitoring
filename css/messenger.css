@@ -22,7 +22,7 @@
 
 .messenger-container {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px;
     right: 20px;
     width: 460px;
     max-width: 90vw;
@@ -332,4 +332,29 @@
     .message {
         max-width: 90%;
     }
+}
+
+
+/* Back button styling */
+.back-button {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    color: #333;
+    font-size: .8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: all 0.3s ease-in-out;
+}
+
+.back-button:hover {
+    background-color: #3f72af; /* same as header color or highlight */
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }

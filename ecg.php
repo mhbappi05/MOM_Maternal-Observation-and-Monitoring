@@ -72,7 +72,7 @@ if (isset($_GET['doctor_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECG Monitoring Dashboard</title>
+    <title>MOM Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -86,7 +86,7 @@ if (isset($_GET['doctor_id'])) {
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">
                 <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo" class="logo-img">
-                ECG Monitoring Dashboard
+                MOM - Maternal Observation and Monitoring Dashboard
             </a>
             <!-- Added logout button -->
             <button class="btn btn-outline-light" id="logoutButton">
@@ -122,11 +122,15 @@ if (isset($_GET['doctor_id'])) {
 
         <!-- Messenger UI -->
         <div class="messenger-container" id="messengerContainer" style="display: none;">
-            <div class="messenger-header">
-                <h4>Consult with the Doctor</h4>
+            <div class="messenger-header d-flex align-items-center">
+                <button class="back-button" id="backToDoctors" style="display:none;">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <h4 class="flex-grow-1 mb-0" id="messengerHeader">Consult with the Doctor</h4>
                 <button class="close-messenger" id="closeMessenger">&times;</button>
             </div>
-            
+
+
             <!-- Doctor List -->
             <div id="doctorList" style="display: block;">
                 <h5>Select a Doctor</h5>
@@ -247,6 +251,30 @@ if (isset($_GET['doctor_id'])) {
             </div>
         </div>
     </div>
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white text-center py-4 mt-4">
+        <div class="container">
+            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All rights
+                reserved.</p>
+            <div class="social-icons">
+                <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
+                    class="text-white mx-2">
+                    <i class="bi bi-envelope"></i>
+                </a>
+
+                <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-github"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
 
 
     <script src="js/chatbot.js"></script>

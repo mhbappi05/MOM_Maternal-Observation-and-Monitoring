@@ -102,25 +102,27 @@ const ecgFetalChart = new Chart(ecgFetalCtx, {
   options: chartOptions,
 });
 function updateHealthSuggestions() {
-  const motherECG = parseInt(
-    document.getElementById("mother_ecg_stats").innerText.replace(/\D/g, ""),
-    10
-  );
-  const fetalECG = parseInt(
-    document.getElementById("fetal_ecg_stats").innerText.replace(/\D/g, ""),
-    10
-  );
-  const motherTemp = parseFloat(
-    document.getElementById("temperature_mother").innerText
-  );
-  const fetalTemp = parseFloat(
-    document.getElementById("temperature_fetal").innerText
-  );
-  const oxygenMother = parseFloat(
-    document.getElementById("oxygen_mother").innerText
-  );
+  const motherECG = 55;
+  const fetalECG = 170;
+  const motherTemp = 38.2;
+  const fetalTemp = 39.0;
+  const oxygenMother = 93.0;
+
+  console.log({ motherECG, fetalECG, motherTemp, fetalTemp, oxygenMother });
 
   let suggestions = [];
+
+  if (
+    isNaN(motherECG) ||
+    isNaN(fetalECG) ||
+    isNaN(motherTemp) ||
+    isNaN(fetalTemp) ||
+    isNaN(oxygenMother)
+  ) {
+    document.getElementById("health_suggestions").innerHTML =
+      "Waiting for valid vitals data...";
+    return;
+  }
 
   // ECG Analysis (Mother)
   if (motherECG < 60) {
@@ -163,6 +165,13 @@ function updateHealthSuggestions() {
     );
   }
 
+  console.log("Suggestions:", suggestions);
+  console.log("Mother ECG:", motherECG); // Expected: number like 70–100
+  console.log("Fetal ECG:", fetalECG); // Expected: number like 120–160
+  console.log("Mother Temp:", motherTemp); // Expected: number like 36–38
+  console.log("Fetal Temp:", fetalTemp); // Expected: number like 37–38
+  console.log("Oxygen Mother:", oxygenMother); // Expected: number like 95–99
+
   // Display suggestions
   document.getElementById("health_suggestions").innerHTML =
     suggestions.length > 0
@@ -202,7 +211,7 @@ function updateData() {
 
   // Update metrics
   document.getElementById("heart_rate_fetal").innerText =
-    Math.floor(Math.random() * 40 + 120) + " bpm";
+    Math.floor(Math.random() * 40 + 50) + " bpm";
   document.getElementById("temperature_mother").innerText =
     (36 + Math.random()).toFixed(1) + " °C";
   document.getElementById("temperature_fetal").innerText =
@@ -224,7 +233,7 @@ function updateLastUpdate() {
   );
 }
 
-setInterval(updateData, 2000);
+setInterval(updateData, 5000);
 
 // Log out button functionality
 document.getElementById("logoutButton").addEventListener("click", function () {
@@ -232,9 +241,11 @@ document.getElementById("logoutButton").addEventListener("click", function () {
   window.location.href = "login.html"; // Example redirect to login page
 });
 
-
 // Toggle chat window visibility
 function toggleChat() {
   const chatbox = document.getElementById("chatbox");
-  chatbox.style.display = chatbox.style.display === "none" || chatbox.style.display === "" ? "block" : "none";
+  chatbox.style.display =
+    chatbox.style.display === "none" || chatbox.style.display === ""
+      ? "block"
+      : "none";
 }

@@ -14,18 +14,22 @@ document.querySelectorAll(".doctor-item").forEach(item => {
 });
 
 function selectDoctor(doctorId) {
-    // Hide the doctor list
-    document.getElementById("doctorList").style.display = "none";
+    // Get the selected doctor button by id
+    const doctorElem = document.querySelector(`.doctor-item[data-doctor-id="${doctorId}"]`);
+    const doctorName = doctorElem ? doctorElem.getAttribute('data-doctor-name') || doctorElem.innerText.trim() : 'Doctor';
 
-    // Show the chat UI
-    document.getElementById("chatUI").style.display = "block";
+    // Update the header text to the selected doctor's name
+    document.getElementById('messengerHeader').textContent = doctorName;
 
-    // Fetch the doctor messages
+    // Hide doctor list and show chat UI
+    document.getElementById('doctorList').style.display = 'none';
+    document.getElementById('chatUI').style.display = 'block';
+
+    // Load messages and start polling
     loadMessages(doctorId);
-
-    // Start polling for new messages for this doctor
     startPolling(doctorId);
 }
+
 
 // Function to load messages (AJAX call to get chat history)
 function loadMessages(doctorId) {
@@ -107,6 +111,45 @@ document.getElementById('closeMessenger').addEventListener('click', function() {
     document.getElementById('messengerContainer').style.display = 'none';
 
     // Stop polling for new messages
+    if (messagePollingInterval) {
+        clearInterval(messagePollingInterval);
+    }
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const doctorList = document.getElementById('doctorList');
+    const chatUI = document.getElementById('chatUI');
+    const backToDoctors = document.getElementById('backToDoctors');
+
+    // Handle doctor selection buttons
+    document.querySelectorAll('.doctor-item').forEach(button => {
+        button.addEventListener('click', function () {
+            doctorList.style.display = 'none';
+            chatUI.style.display = 'block';
+            backToDoctors.style.display = 'inline-block';
+        });
+    });
+
+    // Back button click
+    backToDoctors.addEventListener('click', function () {
+        chatUI.style.display = 'none';
+        doctorList.style.display = 'block';
+        backToDoctors.style.display = 'none';
+    });
+});
+
+
+backToDoctors.addEventListener('click', function () {
+    // Reset header text
+    document.getElementById('messengerHeader').textContent = 'Consult with the Doctor';
+
+    // Show doctor list and hide chat UI
+    chatUI.style.display = 'none';
+    doctorList.style.display = 'block';
+    backToDoctors.style.display = 'none';
+
+    // Stop polling if active
     if (messagePollingInterval) {
         clearInterval(messagePollingInterval);
     }
