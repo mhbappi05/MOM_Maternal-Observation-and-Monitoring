@@ -1,6 +1,7 @@
 <?php
 include 'db.php';
 session_start();
+$_SESSION["patient_id"] = $patient_id;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = $_POST['phone'];

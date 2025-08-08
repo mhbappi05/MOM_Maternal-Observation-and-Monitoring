@@ -26,6 +26,8 @@ header("Expires: 0");
 
 // Fetch user data
 $user_id = $_SESSION['id'];
+$tableName = "patient_" . intval($user_id) . "_data";
+
 $stmt = $pdo->prepare("SELECT name FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -64,6 +66,40 @@ if (isset($_GET['doctor_id'])) {
     }
 }
 
+// Fetch previous records, latest 10 for example
+$stmt = $pdo->prepare("SELECT * FROM `$tableName` ORDER BY timestamp DESC LIMIT 10");
+$stmt->execute();
+$records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$previousRecordsHTML = '';
+if ($records) {
+    $previousRecordsHTML .= "<table class='table table-striped'>";
+    $previousRecordsHTML .= "<thead><tr>
+        <th>Date</th>
+        <th>Heart Rate</th>
+        <th>Blood Pressure</th>
+        <th>Temperature</th>
+        <th>Fetal Movement</th>
+        <th>Oxygen Saturation</th>
+        <th>Notes</th>
+    </tr></thead><tbody>";
+
+    foreach ($records as $rec) {
+        $previousRecordsHTML .= "<tr>
+            <td>" . htmlspecialchars($rec['timestamp']) . "</td>
+            <td>" . htmlspecialchars($rec['heart_rate'] ?? '--') . "</td>
+            <td>" . htmlspecialchars($rec['blood_pressure'] ?? '--') . "</td>
+            <td>" . htmlspecialchars($rec['body_temperature'] ?? '--') . "</td>
+            <td>" . htmlspecialchars($rec['fetal_movement'] ?? '--') . "</td>
+            <td>" . htmlspecialchars($rec['oxygen_saturation'] ?? '--') . "</td>
+            <td>" . htmlspecialchars($rec['notes'] ?? '') . "</td>
+        </tr>";
+    }
+
+    $previousRecordsHTML .= "</tbody></table>";
+} else {
+    $previousRecordsHTML = "<p>No previous records found.</p>";
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -72,6 +108,7 @@ if (isset($_GET['doctor_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2785/2785544.png">
     <title>MOM Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
@@ -82,9 +119,29 @@ if (isset($_GET['doctor_id'])) {
 </head>
 
 <body>
+    <script>
+        const patientId = <?= json_encode($_SESSION["id"] ?? null) ?>;
+    </script>
+
+    <!-- Themed Preloader -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="MOM Logo" class="preloader-logo">
+            <div class="ecg-line"></div>
+            <p class="loading-text">Monitoring vitals...</p>
+        </div>
+    </div>
+    <!-- Welcome Message -->
+    <div id="welcomeMessage">
+        <div class="welcome-content">
+            <h4>👩‍⚕️ Welcome, <?php echo htmlspecialchars($username); ?>!</h4>
+            <p>We're here to help you monitor your health and your baby's wellbeing. 💖</p>
+        </div>
+    </div>
+
     <nav class="navbar navbar-dark mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">
+            <a class="navbar-brand fw-bold" href="ecg.php">
                 <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo" class="logo-img">
                 MOM - Maternal Observation and Monitoring Dashboard
             </a>
@@ -153,133 +210,137 @@ if (isset($_GET['doctor_id'])) {
             </div>
         </div>
 
+        <!-- Charts and Metrics -->
         <div class="row">
-            <div class="col-md-6">
-                <div class="card chart-container">
+            <!-- Mother Heart Rate -->
+            <div class="col-md-8">
+                <div class="card chart-container mb-4">
                     <div class="chart-header">
-                        <h5 class="chart-title">Mother ECG</h5>
+                        <h5 class="chart-title">Heart Rate</h5>
                         <div class="chart-stats">
                             <span id="mother_ecg_stats">Rate: -- bpm</span>
                         </div>
                     </div>
                     <div class="ecg-chart">
-                        <canvas id="ecgMotherChart"></canvas>
+                        <canvas id="heartRateChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card chart-container">
-                    <div class="chart-header">
-                        <h5 class="chart-title">Fetal ECG</h5>
-                        <div class="chart-stats">
-                            <span id="fetal_ecg_stats">Rate: -- bpm</span>
-                        </div>
+
+            <!-- Mother Blood Pressure -->
+            <div class="col-md-4">
+                <div class="card metric-card mb-4">
+                    <div class="metric-icon">
+                        <i class="bi bi-droplet-half"></i>
                     </div>
-                    <div class="ecg-chart">
-                        <canvas id="ecgFetalChart"></canvas>
-                    </div>
+                    <h5>Blood Pressure</h5>
+                    <p id="bp_mother" class="metric-value">-- / -- mmHg</p>
                 </div>
             </div>
         </div>
+
+        <!-- Temperature, Fetal Movement, Oxygen -->
         <div class="row">
-            <div class="col-md-3">
-                <div class="card metric-card">
-                    <div class="metric-icon">
-                        <i class="bi bi-heart-pulse"></i>
-                    </div>
-                    <h5>Fetal Heart Rate</h5>
-                    <p id="heart_rate_fetal" class="metric-value">-- bpm</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card metric-card">
+            <div class="col-md-4">
+                <div class="card metric-card mb-4">
                     <div class="metric-icon">
                         <i class="bi bi-thermometer-half"></i>
                     </div>
-                    <h5>Mother Temperature</h5>
+                    <h5>Body Temperature</h5>
                     <p id="temperature_mother" class="metric-value">-- °C</p>
                 </div>
             </div>
-            <div class="col-md-3">
+
+            <!-- Fetal Movement -->
+            <div class="col-md-4">
                 <div class="card metric-card">
                     <div class="metric-icon">
-                        <i class="bi bi-thermometer"></i>
+                        <i class="bi bi-activity"></i> <!-- fetal movement icon -->
                     </div>
-                    <h5>Fetal Temperature</h5>
-                    <p id="temperature_fetal" class="metric-value">-- °C</p>
+                    <h5>Fetal Movement</h5>
+                    <p id="fetal_movement" class="metric-value">-- kicks/min</p>
                 </div>
             </div>
-            <div class="col-md-3">
+
+            <!-- Mother Oxygen -->
+            <div class="col-md-4">
                 <div class="card metric-card">
                     <div class="metric-icon">
-                        <i class="bi bi-lungs"></i>
+                        <i class="bi bi-droplet"></i> <!-- oxygen icon -->
                     </div>
-                    <h5>Mother Oxygen</h5>
+                    <h5>Oxygen Saturation</h5>
                     <p id="oxygen_mother" class="metric-value">--%</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card health-card">
-                <h5 class="health-title"><i class="bi bi-activity"></i> Health Suggestions</h5>
-                <div id="health_suggestions" class="suggestions-container">
-                    <p class="suggestion-info">Monitoring vitals...</p>
+        </div>
+
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card health-card">
+                    <h5 class="health-title"><i class="bi bi-activity"></i> Health Suggestions</h5>
+                    <div id="health_suggestions" class="suggestions-container">
+                        <p class="suggestion-info">Monitoring vitals...</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Chatbot -->
-    <div class="chatbot-container">
-        <button class="chatbot-toggle">
-            <i class="bi bi-chat-dots"></i>
-        </button>
-        <div class="chatbox">
-            <div class="chatbox-header">
-                <span>Health Assistant</span>
-                <button class="close-chat">&times;</button>
-            </div>
-            <div class="chatbox-body" id="chatbox-body">
-                <div class="bot-message">Hello! How can I assist you today?</div>
-            </div>
-            <div class="chatbox-footer">
-                <input type="text" id="chat-input" placeholder="Ask about ECG, oxygen, etc.">
-                <button id="send-btn"><i class="bi bi-send"></i></button>
-            </div>
-        </div>
-    </div>
-    <!-- Footer -->
-    <footer class="footer bg-dark text-white text-center py-4 mt-4">
-        <div class="container">
-            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All rights
-                reserved.</p>
-            <div class="social-icons">
-                <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-facebook"></i>
-                </a>
-                <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-instagram"></i>
-                </a>
-                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
-                    class="text-white mx-2">
-                    <i class="bi bi-envelope"></i>
-                </a>
-
-                <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-github"></i>
-                </a>
+        <!-- Chatbot -->
+        <div class="chatbot-container">
+            <button class="chatbot-toggle">
+                <i class="bi bi-chat-dots"></i>
+            </button>
+            <div class="chatbox">
+                <div class="chatbox-header">
+                    <span>Health Assistant</span>
+                    <button class="close-chat">&times;</button>
+                </div>
+                <div class="chatbox-body" id="chatbox-body">
+                    <div class="bot-message">Hello! How can I assist you today?</div>
+                </div>
+                <div class="chatbox-footer">
+                    <input type="text" id="chat-input" placeholder="Ask about ECG, oxygen, etc.">
+                    <button id="send-btn"><i class="bi bi-send"></i></button>
+                </div>
             </div>
         </div>
-    </footer>
+
+        <div class="previous-records-section">
+            <h3>Previous Vitals Records</h3>
+            <?php echo $previousRecordsHTML; ?>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer bg-dark text-white text-center py-4 mt-4">
+            <div class="container">
+                <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All
+                    rights reserved.</p>
+                <div class="social-icons">
+                    <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
+                        class="text-white mx-2">
+                        <i class="bi bi-envelope"></i>
+                    </a>
+                    <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
+                        <i class="bi bi-github"></i>
+                    </a>
+                </div>
+            </div>
+        </footer>
 
 
 
-    <script src="js/chatbot.js"></script>
-    <script src="js/ecg.js"></script>
-    <script src="js/messenger.js"></script>
+        <script src="js/preloader.js"></script>
+        <script src="js/chatbot.js"></script>
+        <script src="js/ecg.js"></script>
+        <script src="js/messenger.js"></script>
 </body>
 
 </html>

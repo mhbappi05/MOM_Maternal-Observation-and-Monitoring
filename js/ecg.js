@@ -1,251 +1,227 @@
-const ecgMotherCtx = document.getElementById("ecgMotherChart").getContext("2d");
-const ecgFetalCtx = document.getElementById("ecgFetalChart").getContext("2d");
-
-const chartOptions = {
-  animation: false,
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: {
-      grid: {
-        display: false,
-      },
-      ticks: {
-        maxTicksLimit: 8,
-        color: "#666",
-        font: {
-          size: 10,
+document.addEventListener("DOMContentLoaded", function () {
+  // Heart Rate Chart
+  const heartRateCtx = document
+    .getElementById("heartRateChart")
+    .getContext("2d");
+  const heartRateChart = new Chart(heartRateCtx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Heart Rate (bpm)",
+          data: [],
+          borderColor: "#b92929ff",
+          backgroundColor: "rgba(219, 52, 52, 0.3)",
+          borderWidth: 2,
+          fill: false, // Don't fill under the line
+          tension: 0, // 🔥 No smoothing (sharp spikes)
+          pointRadius: 4, // Show dots
+          pointBackgroundColor: "#b92929ff",
+          stepped: false, // Set to true for blocky step-style (optional)
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      scales: {
+        x: {
+          title: { display: true, text: "Time" },
+          ticks: { maxRotation: 0, autoSkip: true },
+        },
+        y: {
+          title: { display: true, text: "Heart Rate (bpm)" },
+          min: 50,
+          max: 120,
         },
       },
-    },
-    y: {
-      grid: {
-        color: "rgba(0,0,0,0.05)",
-        drawBorder: false,
+      plugins: {
+        legend: { display: true },
+        tooltip: { enabled: true },
       },
-      ticks: {
-        maxTicksLimit: 5,
-        color: "#666",
-        font: {
-          size: 10,
-        },
-      },
-      min: -0.5,
-      max: 2.5,
     },
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
-    tooltip: {
-      enabled: false,
-    },
-  },
-  elements: {
-    line: {
-      tension: 0.4,
-      borderWidth: 1.5,
-      fill: false,
-    },
-    point: {
-      radius: 0,
-    },
-  },
-};
+  });
 
-const motherChartGradient = ecgMotherCtx.createLinearGradient(0, 0, 0, 200);
-motherChartGradient.addColorStop(0, "#e74c3c");
-motherChartGradient.addColorStop(1, "#e74c3c80");
+  // Generate Dummy Vitals
+  function generateDummyVitals() {
+    return {
+      mother_heart_rate: 60 + Math.random() * 40,
+      mother_bp_sys: 110 + Math.floor(Math.random() * 20),
+      mother_bp_dia: 70 + Math.floor(Math.random() * 15),
+      mother_temp: 36.5 + Math.random() * 1.5,
+      fetal_movement: 5 + Math.floor(Math.random() * 10),
+      mother_oxygen: 92 + Math.random() * 8,
+    };
+  }
 
-const fetalChartGradient = ecgFetalCtx.createLinearGradient(0, 0, 0, 200);
-fetalChartGradient.addColorStop(0, "#3498db");
-fetalChartGradient.addColorStop(1, "#3498db80");
+  function updateChart(chart, labels, data, newValue) {
+    const now = new Date().toLocaleTimeString();
+    labels.push(now);
+    data.push(newValue);
+    if (labels.length > 30) {
+      labels.shift();
+      data.shift();
+    }
+    chart.update();
+  }
+  let sessionVitals = [];
 
-const ecgMotherChart = new Chart(ecgMotherCtx, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: "Mother ECG",
-        borderColor: "#e74c3c",
-        backgroundColor: motherChartGradient,
-        borderWidth: 1.5,
-        pointRadius: 0,
-        data: [],
-        fill: "start",
-        tension: 0.4,
-      },
-    ],
-  },
-  options: chartOptions,
-});
+  function updateVitalsUI() {
+    const vitals = generateDummyVitals();
+    sessionVitals.push(vitals);
 
-const ecgFetalChart = new Chart(ecgFetalCtx, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: "Fetal ECG",
-        borderColor: "#3498db",
-        backgroundColor: fetalChartGradient,
-        borderWidth: 1.5,
-        pointRadius: 0,
-        data: [],
-        fill: "start",
-        tension: 0.4,
-      },
-    ],
-  },
-  options: chartOptions,
-});
-function updateHealthSuggestions() {
-  const motherECG = 55;
-  const fetalECG = 170;
-  const motherTemp = 38.2;
-  const fetalTemp = 39.0;
-  const oxygenMother = 93.0;
+    document.getElementById(
+      "mother_ecg_stats"
+    ).innerText = `Rate: ${vitals.mother_heart_rate.toFixed(0)} bpm`;
+    document.getElementById(
+      "bp_mother"
+    ).innerText = `${vitals.mother_bp_sys} / ${vitals.mother_bp_dia} mmHg`;
+    document.getElementById(
+      "temperature_mother"
+    ).innerText = `${vitals.mother_temp.toFixed(1)} °C`;
+    document.getElementById(
+      "fetal_movement"
+    ).innerText = `${vitals.fetal_movement} kicks/min`;
+    document.getElementById(
+      "oxygen_mother"
+    ).innerText = `${vitals.mother_oxygen.toFixed(0)}%`;
 
-  console.log({ motherECG, fetalECG, motherTemp, fetalTemp, oxygenMother });
+    let suggestions = [];
+    if (vitals.mother_heart_rate < 60)
+      suggestions.push(
+        "Heart rate is low. Consider checking for dizziness or fatigue."
+      );
+    else if (vitals.mother_heart_rate > 100)
+      suggestions.push(
+        "Heart rate is high. Rest and hydration are recommended."
+      );
+    if (vitals.mother_bp_sys > 130 || vitals.mother_bp_dia > 85)
+      suggestions.push("Blood pressure is slightly elevated.");
+    if (vitals.mother_temp > 37.5)
+      suggestions.push(
+        "Body temperature is slightly high. Check for fever and stay hydrated."
+      );
+    if (vitals.mother_oxygen < 95)
+      suggestions.push(
+        "Oxygen level is low. Consider deep breathing exercises or using supplemental oxygen if necessary."
+      );
+    if (suggestions.length === 0)
+      suggestions.push("Vitals are stable. Keep monitoring.");
+    document.getElementById("health_suggestions").innerHTML = suggestions
+      .map((s) => `<p>${s}</p>`)
+      .join("");
 
-  let suggestions = [];
+    const now = new Date();
+    document.getElementById("last-update").textContent = now.toLocaleTimeString(
+      [],
+      { hour: "2-digit", minute: "2-digit" }
+    );
 
-  if (
-    isNaN(motherECG) ||
-    isNaN(fetalECG) ||
-    isNaN(motherTemp) ||
-    isNaN(fetalTemp) ||
-    isNaN(oxygenMother)
-  ) {
-    document.getElementById("health_suggestions").innerHTML =
-      "Waiting for valid vitals data...";
+    // Update heart rate chart
+    updateChart(
+      heartRateChart,
+      heartRateChart.data.labels,
+      heartRateChart.data.datasets[0].data,
+      vitals.mother_heart_rate
+    );
+  }
+
+  setInterval(updateVitalsUI, 5000);
+  updateVitalsUI();
+
+  // Logout button
+  document.getElementById("logoutButton").addEventListener("click", function () {
+  if (!patientId) {
+    alert("Missing patient ID. Cannot save vitals.");
     return;
   }
 
-  // ECG Analysis (Mother)
-  if (motherECG < 60) {
-    suggestions.push(
-      "Mother's heart rate is low. Consider checking for dizziness or fatigue."
-    );
-  } else if (motherECG > 100) {
-    suggestions.push(
-      "Mother's heart rate is high. Rest and hydration are recommended."
-    );
+  if (sessionVitals.length === 0) {
+    window.location.href = "logout.php";
+    return;
   }
 
-  // ECG Analysis (Fetal)
-  if (fetalECG < 110) {
-    suggestions.push(
-      "Fetal heart rate is low. Monitor closely and consider consulting a doctor."
-    );
-  } else if (fetalECG > 160) {
-    suggestions.push(
-      "Fetal heart rate is high. Ensure the mother is well-hydrated and resting."
-    );
-  }
+  const avg = sessionVitals.reduce((acc, curr) => {
+    acc.heart_rate += curr.mother_heart_rate;
+    acc.bp_sys += curr.mother_bp_sys;
+    acc.bp_dia += curr.mother_bp_dia;
+    acc.temp += curr.mother_temp;
+    acc.fetal_movement += curr.fetal_movement;
+    acc.oxygen += curr.mother_oxygen;
+    return acc;
+  }, {
+    heart_rate: 0,
+    bp_sys: 0,
+    bp_dia: 0,
+    temp: 0,
+    fetal_movement: 0,
+    oxygen: 0
+  });
 
-  // Temperature Analysis
-  if (motherTemp > 37.5) {
-    suggestions.push(
-      "Mother's temperature is slightly high. Check for fever and stay hydrated."
-    );
-  }
-  if (fetalTemp > 38) {
-    suggestions.push(
-      "Fetal temperature is high. Immediate medical attention may be needed."
-    );
-  }
+  const n = sessionVitals.length;
+  const averagedData = {
+    patient_id: patientId,
+    heart_rate: (avg.heart_rate / n).toFixed(1),
+    blood_pressure: `${Math.round(avg.bp_sys / n)}/${Math.round(avg.bp_dia / n)}`,
+    body_temperature: (avg.temp / n).toFixed(1),
+    fetal_movement: Math.round(avg.fetal_movement / n),
+    oxygen_saturation: Math.round(avg.oxygen / n),
+    notes: "Auto-logged from session",
+    status: "normal"
+  };
 
-  // Oxygen Level Analysis
-  if (oxygenMother < 95) {
-    suggestions.push(
-      "Mother's oxygen level is low. Consider deep breathing exercises or using supplemental oxygen if necessary."
-    );
-  }
-
-  console.log("Suggestions:", suggestions);
-  console.log("Mother ECG:", motherECG); // Expected: number like 70–100
-  console.log("Fetal ECG:", fetalECG); // Expected: number like 120–160
-  console.log("Mother Temp:", motherTemp); // Expected: number like 36–38
-  console.log("Fetal Temp:", fetalTemp); // Expected: number like 37–38
-  console.log("Oxygen Mother:", oxygenMother); // Expected: number like 95–99
-
-  // Display suggestions
-  document.getElementById("health_suggestions").innerHTML =
-    suggestions.length > 0
-      ? suggestions.join("<br>")
-      : "Vitals are stable. No immediate action required.";
-}
-
-function updateData() {
-  const dummyECG = () => Math.random() * 2;
-  const currentTime = new Date().toLocaleTimeString();
-
-  // Update mother ECG
-  ecgMotherChart.data.labels.push(currentTime);
-  const motherValue = dummyECG();
-  ecgMotherChart.data.datasets[0].data.push(motherValue);
-
-  // Update fetal ECG
-  ecgFetalChart.data.labels.push(currentTime);
-  const fetalValue = dummyECG();
-  ecgFetalChart.data.datasets[0].data.push(fetalValue);
-
-  // Keep last 50 data points
-  if (ecgMotherChart.data.labels.length > 50) {
-    ecgMotherChart.data.labels.shift();
-    ecgMotherChart.data.datasets[0].data.shift();
-    ecgFetalChart.data.labels.shift();
-    ecgFetalChart.data.datasets[0].data.shift();
-  }
-
-  // Update stats
-  document.getElementById("mother_ecg_stats").innerText = `Rate: ${Math.floor(
-    Math.random() * 20 + 70
-  )} bpm`;
-  document.getElementById("fetal_ecg_stats").innerText = `Rate: ${Math.floor(
-    Math.random() * 40 + 120
-  )} bpm`;
-
-  // Update metrics
-  document.getElementById("heart_rate_fetal").innerText =
-    Math.floor(Math.random() * 40 + 50) + " bpm";
-  document.getElementById("temperature_mother").innerText =
-    (36 + Math.random()).toFixed(1) + " °C";
-  document.getElementById("temperature_fetal").innerText =
-    (37 + Math.random()).toFixed(1) + " °C";
-  document.getElementById("oxygen_mother").innerText =
-    (96 + Math.random() * 4).toFixed(1) + "%";
-
-  ecgMotherChart.update();
-  ecgFetalChart.update();
-  updateLastUpdate();
-  updateHealthSuggestions();
-}
-
-function updateLastUpdate() {
-  const now = new Date();
-  document.getElementById("last-update").textContent = now.toLocaleTimeString(
-    [],
-    { hour: "2-digit", minute: "2-digit" }
-  );
-}
-
-setInterval(updateData, 5000);
-
-// Log out button functionality
-document.getElementById("logoutButton").addEventListener("click", function () {
-  // Redirect to login page or perform logout logic
-  window.location.href = "login.html"; // Example redirect to login page
+  fetch("save_vitals.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(averagedData)
+  })
+  .then(res => res.text())
+  .then(text => {
+    console.log("Response from save_vitals.php:", text);
+    if (text.includes("Vitals saved successfully")) {
+      window.location.href = "logout.php";
+    } else {
+      alert("Vitals not saved:\n" + text);
+    }
+  })
+  .catch(err => {
+    console.error("Error during save:", err);
+    alert("Error saving vitals. Logout aborted.");
+  });
 });
 
-// Toggle chat window visibility
-function toggleChat() {
-  const chatbox = document.getElementById("chatbox");
-  chatbox.style.display =
-    chatbox.style.display === "none" || chatbox.style.display === ""
-      ? "block"
-      : "none";
-}
+
+
+
+  function sendAveragedVitalsToServer(averagedVitals) {
+    fetch("save_vitals.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(averagedData),
+    })
+      .then((response) => response.text())
+      .then((result) => {
+        console.log("Save result:", result);
+        if (result.includes("Vitals saved successfully")) {
+          window.location.href = "logout.php";
+        } else {
+          alert("Error saving vitals before logout:\n" + result);
+        }
+      })
+      .catch((error) => {
+        console.error("Save error:", error);
+        alert("Could not save vitals before logout.");
+      });
+  }
+
+  // Chat toggle
+  window.toggleChat = function () {
+    const chatbox = document.getElementById("chatbox");
+    chatbox.style.display =
+      chatbox.style.display === "none" || chatbox.style.display === ""
+        ? "block"
+        : "none";
+  };
+});

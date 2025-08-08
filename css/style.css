@@ -11,6 +11,105 @@ body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #f9fbff;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.preloader-content {
+    text-align: center;
+}
+
+.preloader-logo {
+    width: 100px;
+    animation: pulse 2s infinite ease-in-out;
+    margin-bottom: 20px;
+}
+
+.loading-text {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-top: 10px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.ecg-line {
+    width: 150px;
+    height: 40px;
+    background: url('https://i.imgur.com/3FZpk2D.gif') no-repeat center center;
+    background-size: contain;
+    margin: 0 auto;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Optional: Fade-out effect */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+
+#welcomeMessage {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #ffffff;
+    color: #2c3e50;
+    padding: 20px 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 9998;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    max-width: 300px;
+    display: none;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+#welcomeMessage.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.welcome-content h4 {
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.welcome-content p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+
+
 .navbar {
     background: var(--primary-color) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -36,25 +135,32 @@ body {
 }
 
 .metric-card {
-    text-align: center;
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    min-height: 160px;
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: scale(1.02);
 }
 
 .metric-icon {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    color: var(--accent-color);
-    background: var(--light-bg);
-    width: 60px;
-    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    color: #007bff;
+    /* optional: blue for visibility */
 }
+
 
 .metric-card h5 {
     color: var(--primary-color);
@@ -146,8 +252,10 @@ canvas {
 .patient-details {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Add this line */
-    width: 100%; /* Ensure it takes full width */
+    justify-content: space-between;
+    /* Add this line */
+    width: 100%;
+    /* Ensure it takes full width */
 }
 
 .health-card {
@@ -158,8 +266,10 @@ canvas {
     padding: 1.5rem;
     transition: all 0.3s ease-in-out;
     width: 100%;
-    max-width: 800px; /* Controls max width */
-    margin: auto; /* Centers the card */
+    max-width: 800px;
+    /* Controls max width */
+    margin: auto;
+    /* Centers the card */
     display: flex;
 }
 
@@ -228,6 +338,7 @@ canvas {
 .suggestions-container::-webkit-scrollbar-thumb:hover {
     background: #888;
 }
+
 /* Responsive width handling */
 @media (max-width: 992px) {
     .health-card {
@@ -239,20 +350,66 @@ canvas {
     .health-card {
         max-width: 95%;
     }
+
 }
 
 .footer {
-    position: relative; /* allows it to sit at the bottom naturally */
     width: 100%;
     font-size: 0.9rem;
     background: #212529;
     color: #fff;
 }
+
 .footer .social-icons i {
     font-size: 1.5rem;
     transition: color 0.3s ease;
 }
 
 .footer .social-icons a:hover i {
-    color: #0dcaf0; /* Bootstrap info color on hover */
+    color: #0dcaf0;
+}
+.previous-records-section {
+  max-width: 1200px;
+  margin: 20px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.previous-records-section h3 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #b92929;
+  padding-bottom: 8px;
+}
+
+.previous-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.record-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left: 5px solid #b92929;
+  border-radius: 5px;
+  padding: 15px 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.record-card:hover {
+  box-shadow: 0 5px 15px rgba(185, 41, 41, 0.3);
+}
+
+.record-date {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #b92929;
+}
+
+.record-details div {
+  margin: 4px 0;
+  font-size: 0.95rem;
 }
