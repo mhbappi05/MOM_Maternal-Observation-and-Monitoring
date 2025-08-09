@@ -1,3 +1,4 @@
+let currentDoctorId = null;
 // Open Messenger
 document.getElementById("openMessenger").addEventListener("click", function() {
     document.getElementById("messengerContainer").style.display = "block";
@@ -14,6 +15,7 @@ document.querySelectorAll(".doctor-item").forEach(item => {
 });
 
 function selectDoctor(doctorId) {
+    currentDoctorId = doctorId;  // store selected doctor
     // Get the selected doctor button by id
     const doctorElem = document.querySelector(`.doctor-item[data-doctor-id="${doctorId}"]`);
     const doctorName = doctorElem ? doctorElem.getAttribute('data-doctor-name') || doctorElem.innerText.trim() : 'Doctor';
@@ -60,10 +62,14 @@ function loadMessages(doctorId) {
 // Send message (this can be further enhanced with AJAX to send and receive messages)
 document.getElementById("sendMessageBtn").addEventListener("click", function() {
     const message = document.getElementById("messageInput").value;
-    const doctorId = document.querySelector(".doctor-item").getAttribute("data-doctor-id");
-    
+
+    if (!currentDoctorId) {
+        alert("Please select a doctor first.");
+        return;
+    }
+
     if (message) {
-        sendMessageToDoctor(doctorId, message);
+        sendMessageToDoctor(currentDoctorId, message);
         document.getElementById("messengerBody").innerHTML += "<div>You: " + message + "</div>";
         document.getElementById("messageInput").value = '';  // Clear the input field
     }

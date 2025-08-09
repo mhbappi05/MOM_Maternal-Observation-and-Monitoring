@@ -9,6 +9,9 @@
 body {
     background-color: var(--light-bg);
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    width:100%;
+    margin: 0;
+    padding: 0;
 }
 
 #preloader {
@@ -186,17 +189,17 @@ body {
 
 .chart-title {
     color: var(--primary-color);
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
 }
 
 canvas {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .ecg-chart {
-    background-color: #fafbfc;
+    background-color: #fcfafa;
     border-radius: 8px;
     padding: 10px;
 }
@@ -281,7 +284,7 @@ canvas {
 }
 
 .suggestions-container {
-    max-height: 150px;
+    height: 190px;
     overflow-y: auto;
     padding-right: 10px;
 }
@@ -354,11 +357,14 @@ canvas {
 }
 
 .footer {
-    width: 100%;
-    font-size: 0.9rem;
-    background: #212529;
-    color: #fff;
+    position: relative;
+    width: 99.6vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
 }
+
 
 .footer .social-icons i {
     font-size: 1.5rem;
@@ -369,47 +375,76 @@ canvas {
     color: #0dcaf0;
 }
 .previous-records-section {
-  max-width: 1200px;
-  margin: 20px auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
+    max-width: 1300px;
+    margin: 20px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+
+    max-height: 320px;           /* slightly taller */
+    overflow-y: auto;
+    border: 1px solid #ddd;      /* lighter border */
+    border-radius: 8px;          /* rounded corners */
+    padding: 15px 20px;
+    background-color: #fafafa;   /* subtle background */
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.05);
 }
 
+/* Scrollbar styling for WebKit browsers */
+.previous-records-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.previous-records-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+}
+
+.previous-records-section::-webkit-scrollbar-thumb {
+    background-color: #b92929;
+    border-radius: 8px;
+    border: 2px solid #f1f1f1;
+}
+
+/* Scrollbar styling for Firefox */
+.previous-records-section {
+    scrollbar-width: thin;
+    scrollbar-color: #b92929 #f1f1f1;
+}
+
+/* Header styling */
 .previous-records-section h3 {
-  font-size: 1.8rem;
-  margin-bottom: 15px;
-  border-bottom: 2px solid #b92929;
-  padding-bottom: 8px;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    border-bottom: 3px solid #b92929;
+    padding-bottom: 8px;
+    font-weight: 700;
 }
 
-.previous-records-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
+/* Record card improvements */
 .record-card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-left: 5px solid #b92929;
-  border-radius: 5px;
-  padding: 15px 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transition: box-shadow 0.3s ease;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 5px solid #b92929;
+    border-radius: 5px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    cursor: default;
 }
 
 .record-card:hover {
-  box-shadow: 0 5px 15px rgba(185, 41, 41, 0.3);
+    box-shadow: 0 8px 20px rgba(185, 41, 41, 0.3);
+    transform: translateY(-3px);
 }
 
 .record-date {
-  font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 10px;
-  color: #b92929;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #b92929;
 }
 
 .record-details div {
-  margin: 4px 0;
-  font-size: 0.95rem;
+    margin: 4px 0;
+    font-size: 0.95rem;
 }

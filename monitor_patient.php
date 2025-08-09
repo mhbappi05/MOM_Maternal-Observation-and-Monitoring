@@ -1,85 +1,179 @@
 <?php
 session_start();
-include 'db.php';
+include 'db.php'; // $conn is your mysqli connection
 
-// Check if the user is logged in and is a doctor
+// Enable error reporting for debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// --- Auth check ---
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'doctor') {
     header("Location: index.html");
     exit();
 }
 
-// Validate patient_id exists and is numeric
+$doctor_id = (int) $_SESSION['id'];
+
+// --- Validate patient_id ---
 $patient_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if (!$patient_id) {
     die("Invalid patient ID. Please provide a valid patient ID.");
 }
 
-// Fetch patient data
-$sql = "SELECT * FROM users WHERE id = ? AND role = 'patient'";
+// --- Fetch patient info ---
+$sql = "SELECT * FROM users WHERE id = ? AND role = 'patient' LIMIT 1";
 $stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param("i", $patient_id);
 $stmt->execute();
 $result = $stmt->get_result();
-
-// Check if patient exists
-if ($result->num_rows === 0) {
+if (!$result || $result->num_rows === 0) {
     die("Patient not found. Please check the patient ID.");
 }
-
 $patient = $result->fetch_assoc();
+$stmt->close();
+
+// --- Check if patient's data table exists ---
+$patient_data_table = "patient_" . intval($patient_id) . "_data";
+$table_check = $conn->query("SHOW TABLES LIKE '" . $conn->real_escape_string($patient_data_table) . "'");
+$patient_table_exists = ($table_check && $table_check->num_rows === 1);
+
+// --- Fetch latest vitals ---
+$latest_data = [
+    'heart_rate' => 'N/A',
+    'blood_pressure' => 'N/A',
+    'body_temperature' => 'N/A',
+    'fetal_movement' => 'N/A',
+    'oxygen_saturation' => 'N/A',
+    'notes' => 'N/A',
+    'status' => 'N/A',
+    'timestamp' => 'N/A'
+];
+if ($patient_table_exists) {
+    $sql_data = "SELECT * FROM `$patient_data_table` ORDER BY `timestamp` DESC LIMIT 1";
+    $res = $conn->query($sql_data);
+    if ($res && $res->num_rows > 0) {
+        $row = $res->fetch_assoc();
+        $latest_data['heart_rate'] = $row['heart_rate'] ?? 'N/A';
+        $latest_data['blood_pressure'] = $row['blood_pressure'] ?? 'N/A';
+        $latest_data['body_temperature'] = $row['body_temperature'] ?? 'N/A';
+        $latest_data['fetal_movement'] = $row['fetal_movement'] ?? 'N/A';
+        $latest_data['oxygen_saturation'] = $row['oxygen_saturation'] ?? 'N/A';
+        $latest_data['notes'] = $row['notes'] ?? 'N/A';
+        $latest_data['status'] = $row['status'] ?? 'N/A';
+        $latest_data['timestamp'] = $row['timestamp'] ?? 'N/A';
+    }
+}
+
+$lastUpdated = (!empty($latest_data['timestamp']) && $latest_data['timestamp'] !== 'N/A')
+    ? date("F j, Y H:i", strtotime($latest_data['timestamp']))
+    : "N/A";
+
+// --- Fetch last 5 vitals readings ---
+$last5_readings = [];
+if ($patient_table_exists) {
+    $sql_last5 = "SELECT `timestamp`, `heart_rate`, `oxygen_saturation`, `blood_pressure`, `status`, `fetal_movement` 
+                  FROM `$patient_data_table` ORDER BY `timestamp` DESC LIMIT 5";
+    $res5 = $conn->query($sql_last5);
+    if ($res5 && $res5->num_rows > 0) {
+        while ($r = $res5->fetch_assoc()) {
+            $last5_readings[] = $r;
+        }
+    }
+}
+
+// --- Ensure doctor_patient_notes table exists ---
+$create_table_sql = "
+CREATE TABLE IF NOT EXISTS doctor_patient_notes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    note_title VARCHAR(255) DEFAULT NULL,
+    note_content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+";
+if (!$conn->query($create_table_sql)) {
+    die("Error creating doctor_patient_notes table: " . $conn->error);
+}
+
+// --- Fetch patient info ---
+$sql = "SELECT * FROM users WHERE id = ? AND role = 'patient' LIMIT 1";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
+$stmt->bind_param("i", $patient_id);
+$stmt->execute();
+$result = $stmt->get_result();
+if (!$result || $result->num_rows === 0) {
+    die("Patient not found. Please check the patient ID.");
+}
+$patient = $result->fetch_assoc();
+$stmt->close();
+
+// --- Fetch doctor's own notes for this patient ---
+$doctor_notes = [];
+$sql_doc_notes = "SELECT id, note_title, note_content, created_at FROM doctor_patient_notes WHERE patient_id = ? AND doctor_id = ? ORDER BY created_at DESC LIMIT 5";
+$stmt_doc_notes = $conn->prepare($sql_doc_notes);
+if ($stmt_doc_notes) {
+    $stmt_doc_notes->bind_param("ii", $patient_id, $doctor_id);
+    $stmt_doc_notes->execute();
+    $res_doc_notes = $stmt_doc_notes->get_result();
+    if ($res_doc_notes && $res_doc_notes->num_rows > 0) {
+        while ($rn = $res_doc_notes->fetch_assoc()) {
+            $doctor_notes[] = $rn;
+        }
+    }
+    $stmt_doc_notes->close();
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Patient | ECG Portal</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/monitorstyle.css">
-    <link rel="stylesheet" href="css/doctorstyle.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Monitor Patient | MOM</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
+    <link rel="stylesheet" href="css/monitorstyle.css" />
+    <link rel="stylesheet" href="css/doctorstyle.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
 <body>
-
-    <!-- Navigation Bar -->
     <nav class="navbar navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="doctor-dashboard.php">
-                <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo"
-                    class="logo-img"></i>ECG Monitoring Dashboard</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo" class="logo-img"> MOM
+                - Maternal Observation and Monitoring Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span
+                    class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="doctor-dashboard.php">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Patient Monitoring</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Records</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="doctor-dashboard.php">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Patient Monitoring</a></li>
                 </ul>
                 <div class="d-flex">
-                    <button class="btn btn-outline-light" id="logoutButton"
-                        onclick="window.location.href='logout.php';">
-                        <i class="bi bi-box-arrow-right"></i> Log Out
-                    </button>
+                    <button class="btn btn-outline-light" id="logoutButton"><i class="bi bi-box-arrow-right"></i> Log
+                        Out</button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="main-container">
+    <div class="main-container container">
         <?php if (isset($patient) && is_array($patient)): ?>
-            <div class="patient-header">
+            <div class="patient-header d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h2><i class="fas fa-user-circle me-2"></i><?= htmlspecialchars($patient['name']) ?></h2>
                     <div class="d-flex align-items-center mt-2">
@@ -89,98 +183,82 @@ $patient = $result->fetch_assoc();
                         </div>
                     </div>
                 </div>
-                <div>
+                <div class="text-end">
                     <span class="badge bg-success p-2">Online</span>
-                    <div class="timestamp mt-1">Last updated: <span id="lastUpdated">March 14, 2025 14:32</span></div>
+                    <div class="timestamp mt-1">Last updated: <span
+                            id="lastUpdated"><?= htmlspecialchars($lastUpdated) ?></span></div>
+                    <div class="small text-muted">Server time: <span id="nowTime"><?= date("F j, Y H:i") ?></span></div>
                 </div>
             </div>
 
-            <!-- Real-time vital stats -->
-            <div class="row">
+            <!-- Vital cards -->
+            <div class="row mb-5">
                 <div class="col-md-3">
                     <div class="card vital-card">
                         <div class="card-body">
-                            <div class="vital-icon text-primary">
-                                <i class="fas fa-heartbeat"></i>
-                            </div>
-                            <h1 class="vital-value">72 <small>bpm</small></h1>
+                            <div class="vital-icon text-primary"><i class="fas fa-heartbeat"></i></div>
+                            <h1 class="vital-value"><?= htmlspecialchars($latest_data['heart_rate'] ?? '-') ?>
+                                <small>bpm</small>
+                            </h1>
                             <p class="vital-label">HEART RATE</p>
-                            <span class="alert-indicator normal"></span> Normal
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-3">
                     <div class="card vital-card">
                         <div class="card-body">
-                            <div class="vital-icon text-info">
-                                <i class="fas fa-lungs"></i>
-                            </div>
-                            <h1 class="vital-value">98<small>%</small></h1>
+                            <div class="vital-icon text-info"><i class="fas fa-lungs"></i></div>
+                            <h1 class="vital-value">
+                                <?= htmlspecialchars($latest_data['oxygen_saturation'] ?? '-') ?><small>%</small>
+                            </h1>
                             <p class="vital-label">OXYGEN SATURATION</p>
-                            <span class="alert-indicator normal"></span> Normal
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-3">
                     <div class="card vital-card">
                         <div class="card-body">
-                            <div class="vital-icon text-warning">
-                                <i class="fas fa-tachometer-alt"></i>
-                            </div>
-                            <h1 class="vital-value">120/80</h1>
+                            <div class="vital-icon text-warning"><i class="fas fa-tachometer-alt"></i></div>
+                            <h1 class="vital-value"><?= htmlspecialchars($latest_data['blood_pressure'] ?? '-') ?></h1>
                             <p class="vital-label">BLOOD PRESSURE</p>
-                            <span class="alert-indicator normal"></span> Normal
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-3">
                     <div class="card vital-card">
                         <div class="card-body">
-                            <div class="vital-icon text-secondary">
-                                <i class="fas fa-thermometer-half"></i>
-                            </div>
-                            <h1 class="vital-value">98.6<small>°F</small></h1>
+                            <div class="vital-icon text-secondary"><i class="fas fa-thermometer-half"></i></div>
+                            <h1 class="vital-value">
+                                <?= htmlspecialchars($latest_data['body_temperature'] ?? '-') ?><small>°F</small>
+                            </h1>
                             <p class="vital-label">TEMPERATURE</p>
-                            <span class="alert-indicator normal"></span> Normal
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card vital-card">
+                        <div class="card-body">
+                            <div class="vital-icon text-danger"><i class="fas fa-baby"></i></div>
+                            <h1 class="vital-value"><?= htmlspecialchars($latest_data['fetal_movement'] ?? '-') ?></h1>
+                            <p class="vital-label">FETAL MOVEMENTS (last hour)</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ECG Graph -->
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>ECG Monitoring</h5>
-                    <div>
-                        <button class="btn btn-sm btn-light me-2">
-                            <i class="fas fa-download me-1"></i> Export
-                        </button>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-light active">Real-time</button>
-                            <button class="btn btn-light">6h</button>
-                            <button class="btn btn-light">24h</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="ecg-container">
-                        <canvas id="ecgChart" class="img-fluid"></canvas>
-                    </div>
-                </div>
-            </div>
-
-
-
-            <!-- Additional patient data -->
+            <!-- Additional patient data: latest readings + notes -->
             <div class="row">
-                <!-- Latest readings -->
-                <div class="col-md-6">
+                <div class="col-md-6 mb-3">
                     <div class="card">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-asphalt">
                             <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Latest Readings</h5>
                         </div>
                         <div class="card-body">
-                            <table class="table table-hover">
+                            <table class="table table-hover mb-0">
                                 <thead>
                                     <tr>
                                         <th>Time</th>
@@ -191,91 +269,117 @@ $patient = $result->fetch_assoc();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>14:30</td>
-                                        <td>72 bpm</td>
-                                        <td>98%</td>
-                                        <td>120/80</td>
-                                        <td><span class="badge bg-success">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>14:00</td>
-                                        <td>75 bpm</td>
-                                        <td>97%</td>
-                                        <td>122/82</td>
-                                        <td><span class="badge bg-success">Normal</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>13:30</td>
-                                        <td>78 bpm</td>
-                                        <td>96%</td>
-                                        <td>126/84</td>
-                                        <td><span class="badge bg-success">Normal</span></td>
-                                    </tr>
+                                    <?php if (!empty($last5_readings)): ?>
+                                        <?php foreach ($last5_readings as $reading): ?>
+                                            <?php
+                                            $status = strtolower($reading['status'] ?? 'n/a');
+                                            $badge_class = 'bg-secondary';
+                                            if ($status === 'normal')
+                                                $badge_class = 'bg-success';
+                                            elseif ($status === 'warning')
+                                                $badge_class = 'bg-warning text-dark';
+                                            elseif ($status === 'critical')
+                                                $badge_class = 'bg-danger';
+                                            ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars(date("H:i", strtotime($reading['timestamp'] ?? 'now'))) ?>
+                                                </td>
+                                                <td><?= htmlspecialchars($reading['heart_rate'] ?? '-') ?> bpm</td>
+                                                <td><?= htmlspecialchars($reading['oxygen_saturation'] ?? '-') ?>%</td>
+                                                <td><?= htmlspecialchars($reading['blood_pressure'] ?? '-') ?></td>
+                                                <td><span
+                                                        class="badge <?= $badge_class ?>"><?= htmlspecialchars(ucfirst($reading['status'] ?? 'N/A')) ?></span>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="5" class="text-center">No recent readings available.</td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Patient Notes -->
-                <div class="col-md-6">
+                <!-- Patient Notes (doctor's notes + optional patient_notes) -->
+                <div class="col-md-6 mb-3">
                     <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="fas fa-notes-medical me-2"></i>Patient Notes</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="history-item">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Medication Update</strong>
-                                    <small>Today, 09:15</small>
-                                </div>
-                                <p class="mb-0">Patient reports taking all prescribed medications as directed. No adverse
-                                    effects noted.</p>
-                            </div>
-                            <div class="history-item">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Activity Level</strong>
-                                    <small>Yesterday, 16:30</small>
-                                </div>
-                                <p class="mb-0">Patient completed 20 minutes of moderate exercise. Vitals remained stable
-                                    throughout.</p>
-                            </div>
-                            <div class="history-item">
-                                <div class="d-flex justify-content-between">
-                                    <strong>Diet Notes</strong>
-                                    <small>Mar 12, 2025</small>
-                                </div>
-                                <p class="mb-0">Patient adhering to low-sodium diet as recommended.</p>
+                        <div class="card-header bg-asphalt d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-white">
+                                <i class="fas fa-notes-medical me-2"></i>Patient Notes
+                            </h5>
+                            <div>
+                                <button class="btn btn-sm btn-primary px-3 py-1 rounded-pill shadow-sm"
+                                    style="font-weight: 500;" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                                    <i class="fas fa-plus me-1"></i> Add Note
+                                </button>
                             </div>
                         </div>
-                        <div class="card-footer bg-white">
-                            <button class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-plus me-1"></i> Add Note
+                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                            <?php if (!empty($doctor_notes)): ?>
+                                <?php foreach ($doctor_notes as $note): ?>
+                                    <div class="history-item mb-3">
+                                        <div class="d-flex justify-content-between">
+                                            <strong><?= htmlspecialchars($note['note_title'] ?? 'Untitled') ?></strong>
+                                            <small><?= htmlspecialchars(date("M d, Y H:i", strtotime($note['created_at'] ?? 'now'))) ?></small>
+                                        </div>
+                                        <p class="mb-0"><?= nl2br(htmlspecialchars($note['note_content'] ?? '')) ?></p>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p class="text-muted">No personal doctor notes yet. Add one using "Add Note".</p>
+                            <?php endif; ?>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick actions -->
+            <div class="quick-actions mb-4">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactPatientModal"><i
+                        class="fas fa-phone me-1"></i> Contact Patient</button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#prescribeMedicationModal"><i
+                        class="fas fa-prescription me-1"></i> Prescribe Medication</button>
+                <a href="doctor-dashboard.php" class="btn btn-outline-secondary float-end"><i
+                        class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+            </div>
+
+            <!-- Add Doctor's Private Note Modal -->
+            <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header ">
+                            <h5 class="modal-title" id="addNoteModalLabel">
+                                <i class="fas fa-user-md me-2"></i> Add Private Patient Note
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="patientId" value="<?= $patient_id ?>">
+                            <div class="mb-3">
+                                <label for="noteTitle" class="form-label">Note Title</label>
+                                <input type="text" class="form-control" id="noteTitle" placeholder="Enter note title">
+                            </div>
+                            <div class="mb-3">
+                                <label for="noteContent" class="form-label">Note Content</label>
+                                <textarea class="form-control" id="noteContent" rows="4"
+                                    placeholder="Enter note details"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-success" id="saveNoteButton">
+                                <i class="fas fa-save me-1"></i> Save Note
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick actions -->
-            <div class="quick-actions">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactPatientModal">
-                    <i class="fas fa-phone me-1"></i> Contact Patient
-                </button>
-                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#prescribeMedicationModal">
-                    <i class="fas fa-prescription me-1"></i> Prescribe Medication
-                </button>
-                <button class="btn btn-outline-primary">
-                    <i class="fas fa-calendar-plus me-1"></i> Schedule Visit
-                </button>
-                <button class="btn btn-outline-primary">
-                    <i class="fas fa-file-medical me-1"></i> View Full Medical Record
-                </button>
-                <a href="doctor-dashboard.php" class="btn btn-outline-secondary float-end">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                </a>
-            </div>
             <!-- Contact Patient Modal -->
             <div class="modal fade" id="contactPatientModal" tabindex="-1" aria-labelledby="contactPatientModalLabel"
                 aria-hidden="true">
@@ -301,167 +405,161 @@ $patient = $result->fetch_assoc();
                 </div>
             </div>
 
-            <!-- Prescribe Medication Modal -->
-            <div class="modal fade" id="prescribeMedicationModal" tabindex="-1"
-                aria-labelledby="prescribeMedicationModalLabel" aria-hidden="true">
+            <!-- Prescribe Medication Modal (kept as-is) -->
+            <div class="modal fade" id="prescribeMedicationModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="prescribeMedicationModalLabel">Prescribe Medication</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5>Prescribe Medication</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <p><strong>Name:</strong> <?= htmlspecialchars($patient['name']) ?></p>
                             <p><strong>Phone Number:</strong> <?= htmlspecialchars($patient['phone']) ?></p>
                             <div class="mb-3">
                                 <label for="medicationText" class="form-label">Medication</label>
-                                <textarea class="form-control" id="medicationText" rows="3"></textarea>
+                                <textarea id="medicationText" class="form-control" rows="3"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label for="extraNoteText" class="form-label">Extra Note</label>
-                                <textarea class="form-control" id="extraNoteText" rows="3"></textarea>
+                                <textarea id="extraNoteText" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" id="sendMedicationButton">Send Medication</button>
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button id="sendMedicationButton" class="btn btn-primary">Send Medication</button>
                         </div>
                     </div>
                 </div>
             </div>
-
         <?php else: ?>
             <div class="alert alert-danger mt-4">
                 <h4><i class="fas fa-exclamation-triangle me-2"></i>Error</h4>
                 <p>Unable to load patient data. Please check the patient ID and try again.</p>
-                <a href="doctor-dashboard.php" class="btn btn-outline-secondary mt-3">
-                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                </a>
+                <a href="doctor-dashboard.php" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-1"></i>
+                    Back to Dashboard</a>
             </div>
         <?php endif; ?>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        // Update the last updated time every minute
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('lastUpdated').textContent =
-                now.toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                }) + ' ' +
-                now.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-        }
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white text-center py-4 mt-4">
+        <div class="container">
+            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All
+                rights reserved.</p>
+            <div class="social-icons">
+                <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
+                    class="text-white mx-2">
+                    <i class="bi bi-envelope"></i>
+                </a>
+                <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-github"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
 
-        setInterval(updateTime, 60000);
-        updateTime();
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Do not overwrite server-provided lastUpdated; show server time separately
+        function updateNowTime() {
+            const now = new Date();
+            document.getElementById('nowTime').textContent = now.toLocaleString();
+        }
+        setInterval(updateNowTime, 60000);
+        updateNowTime();
 
         document.getElementById("logoutButton").addEventListener("click", function () {
             window.location.href = "login.html";
         });
-        // Send message to patient
-        document.getElementById("sendMessageButton").addEventListener("click", function () {
-            const messageText = document.getElementById("messageText").value;
-            const patientId = <?= $patient_id ?>;
 
+        // Send message to patient (keeps your existing ajax endpoint)
+        $('#sendMessageButton').on('click', function () {
+            const messageText = $('#messageText').val();
+            const patientId = <?= $patient_id ?>;
             $.ajax({
                 url: 'send_message_Contact_patient.php',
                 type: 'POST',
-                data: {
-                    patient_id: patientId,
-                    message: messageText
-                },
-                success: function (response) {
+                data: { patient_id: patientId, message: messageText },
+                success: function () {
                     alert('Message sent successfully!');
                     $('#contactPatientModal').modal('hide');
                 },
-                error: function () {
-                    alert('Failed to send message. Please try again.');
-                }
+                error: function () { alert('Failed to send message. Please try again.'); }
             });
         });
-        // Send medication to patient
-        document.getElementById("sendMedicationButton").addEventListener("click", function () {
-            const medicationText = document.getElementById("medicationText").value;
-            const extraNoteText = document.getElementById("extraNoteText").value;
+
+        // Prescribe medication
+        $('#sendMedicationButton').on('click', function () {
+            const medicationText = $('#medicationText').val();
+            const extraNoteText = $('#extraNoteText').val();
             const patientId = <?= $patient_id ?>;
-
             const message = `**Medication Prescribed**\n\n**Medication:** ${medicationText}\n**Note:** ${extraNoteText}`;
-
             $.ajax({
                 url: 'send_message_pescribe_medi.php',
                 type: 'POST',
-                data: {
-                    patient_id: patientId,
-                    message: message
-                },
-                success: function (response) {
-                    alert('Medication prescribed successfully!');
-                    $('#prescribeMedicationModal').modal('hide');
-                },
-                error: function () {
-                    alert('Failed to prescribe medication. Please try again.');
-                }
+                data: { patient_id: patientId, message: message },
+                success: function () { alert('Medication prescribed successfully!'); $('#prescribeMedicationModal').modal('hide'); },
+                error: function () { alert('Failed to prescribe medication. Please try again.'); }
             });
         });
 
-        // Dummy ECG Data (This would be replaced with real data in a real implementation)
-        let ecgData = {
-            labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], // Time or index labels
-            datasets: [{
-                label: 'ECG Data',
-                data: [0, 10, 5, 2, 20, 30, 45, 40, 60, 90], // Example ECG data points
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1,
-                fill: false
-            }]
-        };
+        //notes
+        document.getElementById('saveNoteButton').addEventListener('click', function () {
+            const patientId = document.getElementById('patientId').value;
+            const noteTitle = document.getElementById('noteTitle').value.trim();
+            const noteContent = document.getElementById('noteContent').value.trim();
 
-        // Render the ECG chart
-        const ctx = document.getElementById('ecgChart').getContext('2d');
-        const ecgChart = new Chart(ctx, {
-            type: 'line', // Line chart for ECG
-            data: ecgData,
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom'
-                    },
-                    y: {
-                        min: -10,
-                        max: 100
-                    }
+            if (!noteTitle || !noteContent) {
+                alert('Please fill both the note title and content.');
+                return;
+            }
+
+            fetch('save_doctor_note.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded', // or 'application/json' if you change PHP
                 },
-                animation: {
-                    duration: 0, // Instant update, for real-time data
-                }
-            }
+                body: new URLSearchParams({
+                    patient_id: patientId,
+                    note_title: noteTitle,
+                    note_content: noteContent
+                })
+            })
+                .then(response => response.text())  // get raw text first
+                .then(text => {
+                    console.log('Response text:', text); // debug: see raw response
+
+                    try {
+                        const data = JSON.parse(text);
+
+                        if (data.success) {
+                            alert('Note saved successfully!');
+                            // Optionally clear form inputs
+                            document.getElementById('noteTitle').value = '';
+                            document.getElementById('noteContent').value = '';
+                            // Optionally reload notes or refresh page to show new note
+                            location.reload();
+                        } else {
+                            alert('Error: ' + (data.message || 'Failed to save note.'));
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse JSON:', e);
+                        alert('Unexpected server response. Check console for details.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('Network or server error occurred.');
+                });
         });
-
-        // Function to update the ECG chart with new data
-        function updateECGGraph(newData) {
-            ecgChart.data.datasets[0].data.push(newData);
-            ecgChart.data.labels.push(ecgChart.data.labels.length); // Update labels (time)
-            if (ecgChart.data.datasets[0].data.length > 10) {
-                ecgChart.data.datasets[0].data.shift(); // Remove the first data point if it's too long
-                ecgChart.data.labels.shift(); // Remove corresponding label
-            }
-            ecgChart.update();
-        }
-
-        // Simulate adding new ECG data every 2 seconds
-        setInterval(() => {
-            let randomData = Math.floor(Math.random() * 100); // Simulate new data
-            updateECGGraph(randomData);
-        }, 2000);
 
     </script>
 </body>

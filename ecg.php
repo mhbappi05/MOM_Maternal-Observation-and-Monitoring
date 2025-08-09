@@ -210,10 +210,60 @@ if ($records) {
             </div>
         </div>
 
+
+
+        <!-- Temperature, Fetal Movement, Oxygen -->
+        <div class="row">
+            <!-- Mother Blood Pressure -->
+            <div class="col-md-3">
+                <div class="card metric-card mb-4">
+                    <div class="metric-icon">
+                        <i class="bi bi-droplet-half"></i>
+                    </div>
+                    <h5>Blood Pressure</h5>
+                    <p id="bp_mother" class="metric-value">-- / -- mmHg</p>
+                </div>
+            </div>
+
+            <!-- Mother Body Temperature -->
+            <div class="col-md-3">
+                <div class="card metric-card mb-4">
+                    <div class="metric-icon">
+                        <i class="bi bi-thermometer-half"></i>
+                    </div>
+                    <h5>Body Temperature</h5>
+                    <p id="temperature_mother" class="metric-value">-- °C</p>
+                </div>
+            </div>
+
+            <!-- Fetal Movement -->
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-activity"></i> <!-- fetal movement icon -->
+                    </div>
+                    <h5>Fetal Movement</h5>
+                    <p id="fetal_movement" class="metric-value">-- kicks/min</p>
+                </div>
+            </div>
+
+            <!-- Mother Oxygen -->
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="metric-icon">
+                        <i class="bi bi-droplet"></i> <!-- oxygen icon -->
+                    </div>
+                    <h5>Oxygen Saturation</h5>
+                    <p id="oxygen_mother" class="metric-value">--%</p>
+                </div>
+            </div>
+
+        </div>
+
         <!-- Charts and Metrics -->
         <div class="row">
             <!-- Mother Heart Rate -->
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <div class="card chart-container mb-4">
                     <div class="chart-header">
                         <h5 class="chart-title">Heart Rate</h5>
@@ -226,65 +276,16 @@ if ($records) {
                     </div>
                 </div>
             </div>
-
-            <!-- Mother Blood Pressure -->
-            <div class="col-md-4">
-                <div class="card metric-card mb-4">
-                    <div class="metric-icon">
-                        <i class="bi bi-droplet-half"></i>
-                    </div>
-                    <h5>Blood Pressure</h5>
-                    <p id="bp_mother" class="metric-value">-- / -- mmHg</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Temperature, Fetal Movement, Oxygen -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card metric-card mb-4">
-                    <div class="metric-icon">
-                        <i class="bi bi-thermometer-half"></i>
-                    </div>
-                    <h5>Body Temperature</h5>
-                    <p id="temperature_mother" class="metric-value">-- °C</p>
-                </div>
-            </div>
-
-            <!-- Fetal Movement -->
-            <div class="col-md-4">
-                <div class="card metric-card">
-                    <div class="metric-icon">
-                        <i class="bi bi-activity"></i> <!-- fetal movement icon -->
-                    </div>
-                    <h5>Fetal Movement</h5>
-                    <p id="fetal_movement" class="metric-value">-- kicks/min</p>
-                </div>
-            </div>
-
-            <!-- Mother Oxygen -->
-            <div class="col-md-4">
-                <div class="card metric-card">
-                    <div class="metric-icon">
-                        <i class="bi bi-droplet"></i> <!-- oxygen icon -->
-                    </div>
-                    <h5>Oxygen Saturation</h5>
-                    <p id="oxygen_mother" class="metric-value">--%</p>
-                </div>
-            </div>
-
-        </div>
-
-
-        <div class="row justify-content-center">
-            <div class="col-lg-8 col-md-10">
+            <div class="col-lg-6 col-md-8">
                 <div class="card health-card">
                     <h5 class="health-title"><i class="bi bi-activity"></i> Health Suggestions</h5>
+                    <br>
                     <div id="health_suggestions" class="suggestions-container">
                         <p class="suggestion-info">Monitoring vitals...</p>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Chatbot -->
@@ -306,6 +307,7 @@ if ($records) {
                 </div>
             </div>
         </div>
+
 
         <div class="previous-records-section">
             <h3>Previous Vitals Records</h3>
@@ -334,8 +336,6 @@ if ($records) {
                 </div>
             </div>
         </footer>
-
-
 
         <script src="js/preloader.js"></script>
         <script src="js/chatbot.js"></script>

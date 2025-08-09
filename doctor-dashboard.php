@@ -106,6 +106,7 @@ if (isset($_GET['patient_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2785/2785544.png">
     <title>Doctor Dashboard | ECG Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
@@ -114,11 +115,18 @@ if (isset($_GET['patient_id'])) {
 </head>
 
 <body>
+    <div id="preloader">
+        <div class="preloader-content">
+            <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="MOM Logo" class="preloader-logo">
+            <div class="ecg-line"></div>
+            <p class="loading-text">Monitoring vitals...</p>
+        </div>
+    </div>
     <nav class="navbar navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">
                 <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo" class="logo-img">
-                ECG Monitoring Dashboard
+                MOM - Maternal Observation and Monitoring Dashboard
             </a>
             <button class="btn btn-outline-light" onclick="window.location.href='logout.php';">
                 <i class="bi bi-box-arrow-right"></i> Log Out
@@ -126,7 +134,7 @@ if (isset($_GET['patient_id'])) {
         </div>
     </nav>
 
-    <div class="container-fluid p-4">
+    <div class="container-fluid p-4" style="max-width: 1300px;">
         <h2>Welcome, Dr. <?= htmlspecialchars($doctor_name) ?></h2>
 
         <div class="card mt-4">
@@ -148,7 +156,7 @@ if (isset($_GET['patient_id'])) {
             </div>
             <div class="card-body">
                 <?php if ($result && $result->num_rows > 0): ?>
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0">
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
@@ -158,26 +166,31 @@ if (isset($_GET['patient_id'])) {
                                 <th>Message</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php while ($patient = $result->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?= $patient['id'] ?></td>
-                                    <td><?= htmlspecialchars($patient['name']) ?></td>
-                                    <td><?= htmlspecialchars($patient['phone']) ?></td>
-                                    <td><a href="monitor_patient.php?id=<?= $patient['id'] ?>"
-                                            class="btn btn-success btn-sm">Monitor</a></td>
-                                    <td>
-                                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#messageModal" data-patient-id="<?= $patient['id'] ?>"
-                                            data-patient-name="<?= htmlspecialchars($patient['name']) ?>">
-                                            Message
-                                        </button>
-
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
                     </table>
+
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                <?php while ($patient = $result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?= $patient['id'] ?></td>
+                                        <td><?= htmlspecialchars($patient['name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['phone']) ?></td>
+                                        <td><a href="monitor_patient.php?id=<?= $patient['id'] ?>"
+                                                class="btn btn-success btn-sm">Monitor</a></td>
+                                        <td>
+                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#messageModal" data-patient-id="<?= $patient['id'] ?>"
+                                                data-patient-name="<?= htmlspecialchars($patient['name']) ?>">
+                                                Message
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
                 <?php else: ?>
                     <p>No patients found.</p>
                 <?php endif; ?>
@@ -207,9 +220,31 @@ if (isset($_GET['patient_id'])) {
             </div>
         </div>
     </div>
-
+    <!-- Footer -->
+    <footer class="footer bg-dark text-white text-center py-4 mt-4">
+        <div class="container">
+            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All
+                rights reserved.</p>
+            <div class="social-icons">
+                <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-instagram"></i>
+                </a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
+                    class="text-white mx-2">
+                    <i class="bi bi-envelope"></i>
+                </a>
+                <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
+                    <i class="bi bi-github"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
 
     <script src="js/doctor_messenger.js"></script>
+    <script src="js/preloader.js"></script>
 </body>
 
 </html>
