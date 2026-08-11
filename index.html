@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOM — Maternal Observation and Monitoring</title>
+<meta name="description" content="MOM connects expectant mothers with doctors for continuous vital monitoring, real-time trends, and care that stays close between visits.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/mom-landing.css">
+</head>
+<body class="mom-landing">
+
+<!-- ================= NAV ================= -->
+<nav class="mom-nav">
+  <div class="wrap">
+    <a href="#top" class="mom-nav__mark">MOM</a>
+    <div class="mom-nav__links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#patients">Patients</a>
+      <a href="#doctors">Doctors</a>
+      <a href="login.html" class="mom-nav__login">Log in</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="mom-hero" id="top">
+  <div class="mom-hero__atmosphere" aria-hidden="true"></div>
+
+  <div class="mom-hero__grid">
+    <div class="mom-hero__content">
+      <h1 class="mom-hero__wordmark">MOM</h1>
+      <p class="mom-hero__expansion">Maternal Observation &amp; Monitoring</p>
+      <p class="mom-hero__headline">Closer care for every heartbeat.</p>
+      <p class="mom-hero__sub">Continuous vitals, a real doctor watching, and a calmer path through pregnancy — from wherever you are.</p>
+
+      <div class="mom-cta-group">
+        <a href="login.html?role=patient" class="mom-btn mom-btn--primary">I'm a Patient</a>
+        <a href="login.html?role=doctor" class="mom-btn mom-btn--secondary">I'm a Doctor</a>
+        <a href="login.html" class="mom-btn mom-btn--ghost">Log in →</a>
+      </div>
+    </div>
+
+    <div class="mom-hero__visual">
+      <div class="mom-hero__image-frame">
+        <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1000&q=80" alt="Expectant mother enjoying peace of mind at home" class="mom-hero__img" />
+        
+        <!-- Floating Live Vital Badge -->
+        <div class="mom-floating-badge">
+          <span class="mom-pulse-dot"></span>
+          <div>
+            <div class="mom-floating-badge__title">Live Monitoring</div>
+            <div class="mom-floating-badge__val">122/78 mmHg · 72 bpm</div>
+          </div>
+        </div>
+
+        <!-- SVG overlay for dynamic animated ECG line over image -->
+        <svg class="mom-hero__svg-overlay" viewBox="0 0 520 560" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="momLineGrad" x1="0" y1="0" x2="520" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#0066FF"/>
+              <stop offset="1" stop-color="#00D1FF"/>
+            </linearGradient>
+            <linearGradient id="momLineGradSoft" x1="0" y1="0" x2="420" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#F3B6A6"/>
+              <stop offset="1" stop-color="#00D1FF"/>
+            </linearGradient>
+          </defs>
+
+          <!-- primary ECG line: mother's pulse -->
+          <path class="mom-pulse-line" d="M40 300 L140 300 L165 240 L195 350 L220 180 L250 300 L480 300" />
+          <!-- secondary pulse: baby's pulse -->
+          <path class="mom-pulse-line--baby" d="M120 400 L180 400 L195 375 L215 420 L235 400 L340 400" />
+
+          <circle class="mom-hero__dot" cx="480" cy="300" r="7"/>
+          <circle class="mom-hero__dot mom-hero__dot--baby" cx="340" cy="400" r="5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="mom-section mom-section--paper" id="how-it-works">
+  <div class="wrap">
+    <div class="mom-section__head">
+      <span class="mom-eyebrow">The flow</span>
+      <h2>Three steps, always in motion</h2>
+      <p>No portals to dig through and no waiting room. Just a steady line between what you're feeling and what your doctor sees.</p>
+    </div>
+
+    <div class="mom-steps">
+      <div class="mom-steps__rail" aria-hidden="true">
+        <svg viewBox="0 0 1000 20" preserveAspectRatio="none">
+          <path d="M0 10 L1000 10" />
+        </svg>
+      </div>
+
+      <div class="mom-step">
+        <span class="mom-step__index">01 — Monitor</span>
+        <h3>Patient logs vitals</h3>
+        <p>Heart rate, blood pressure, temperature, oxygen saturation, and fetal movement — recorded from home, in a couple of taps.</p>
+      </div>
+      <div class="mom-step">
+        <span class="mom-step__index">02 — Review</span>
+        <h3>Doctor watches trends</h3>
+        <p>Readings become charts your doctor can scan in seconds, and step in the moment something needs a closer look.</p>
+      </div>
+      <div class="mom-step">
+        <span class="mom-step__index">03 — Continue</span>
+        <h3>Care keeps going</h3>
+        <p>Questions, prescription notes, and clinical history live in one thread — so the conversation never really stops.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOR PATIENTS ================= -->
+<section class="mom-section mom-section--mist mom-section--patients" id="patients">
+  <div class="wrap mom-audience">
+    <div class="mom-audience__intro">
+      <span class="mom-eyebrow">For patients</span>
+      <h2>Built around your pregnancy, not a hospital ward</h2>
+      <p>Everything you log becomes something your doctor can actually use — and something you can understand too.</p>
+    </div>
+
+    <div class="mom-audience__display">
+      <div class="mom-feature-list">
+        <div class="mom-feature">
+          <span class="mom-feature__reading">72 bpm</span>
+          <div>
+            <h3>Vitals, in near real time</h3>
+            <p>Heart rate, blood pressure, temperature, and oxygen saturation, tracked automatically and turned into trends you can read at a glance.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">12 today</span>
+          <div>
+            <h3>Fetal movement log</h3>
+            <p>A simple way to note kicks and patterns over time — visible to your doctor the moment you save it.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">AI</span>
+          <div>
+            <h3>AI-assisted suggestions</h3>
+            <p>Gentle, data-informed guidance between visits, grounded in your own readings — never a replacement for your doctor's judgment.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">Chat</span>
+          <div>
+            <h3>Talk to your doctor</h3>
+            <p>Message directly, share a concern, and get an answer without booking a separate visit.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Interactive Preview Card -->
+      <div class="mom-app-preview">
+        <div class="mom-app-preview__header">
+          <div class="mom-app-preview__user">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Patient Avatar" class="mom-avatar" />
+            <div>
+              <strong>Sarah Jenkins</strong>
+              <span>Week 28 · Expectant Mother</span>
+            </div>
+          </div>
+          <span class="mom-badge mom-badge--success"><span class="mom-pulse-dot"></span> Active</span>
+        </div>
+        <div class="mom-app-preview__vitals">
+          <div class="mom-vital-card">
+            <span class="mom-vital-card__label">Heart Rate</span>
+            <span class="mom-vital-card__value">72 <small>BPM</small></span>
+          </div>
+          <div class="mom-vital-card">
+            <span class="mom-vital-card__label">Blood Pressure</span>
+            <span class="mom-vital-card__value">118/76</span>
+          </div>
+        </div>
+        <div class="mom-app-preview__ai">
+          <div class="mom-ai-tag">✨ MOM AI Assistant</div>
+          <p>"All vitals are optimal today. Hydration levels look good for Week 28."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOR DOCTORS ================= -->
+<section class="mom-section mom-section--paper mom-section--doctors" id="doctors">
+  <div class="wrap mom-audience">
+    <div class="mom-audience__intro">
+      <span class="mom-eyebrow">For doctors</span>
+      <h2>Every patient, watched over without the waiting room</h2>
+      <p>Search, monitor, and respond — the clinical picture stays current between appointments, not just during them.</p>
+    </div>
+
+    <div class="mom-audience__display">
+      <div class="mom-feature-list">
+        <div class="mom-feature">
+          <span class="mom-feature__reading">Search</span>
+          <div>
+            <h3>Patient search &amp; monitoring</h3>
+            <p>Pull up any patient's vitals and history in seconds, sorted by who needs attention first.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">Live</span>
+          <div>
+            <h3>Remote vitals review</h3>
+            <p>Watch trends as they form, not just isolated numbers — so changes are easy to catch early.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">Chat</span>
+          <div>
+            <h3>Secure messaging</h3>
+            <p>Reach a patient directly the moment a reading looks like it needs a conversation.</p>
+          </div>
+        </div>
+        <div class="mom-feature">
+          <span class="mom-feature__reading">Rx</span>
+          <div>
+            <h3>Prescriptions &amp; clinical notes</h3>
+            <p>Write, save, and revisit prescription notes and case history from anywhere you're working.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor Clinical View Card -->
+      <div class="mom-app-preview mom-app-preview--doctor">
+        <div class="mom-app-preview__header">
+          <div>
+            <strong>Clinical Monitoring Roster</strong>
+            <span class="mom-subtitle-sm">Dr. Aris Thorne · OB-GYN</span>
+          </div>
+        </div>
+        <div class="mom-patient-row">
+          <div class="mom-patient-row__info">
+            <strong>Sarah J. (Week 28)</strong>
+            <span>Vitals stable · 10 min ago</span>
+          </div>
+          <span class="mom-badge mom-badge--success">Normal</span>
+        </div>
+        <div class="mom-patient-row">
+          <div class="mom-patient-row__info">
+            <strong>Elena R. (Week 34)</strong>
+            <span>BP spike flagged · 2 hrs ago</span>
+          </div>
+          <span class="mom-badge mom-badge--warning">Review Required</span>
+        </div>
+        <div class="mom-app-preview__action">
+          <button class="mom-btn-sm">+ Note Prescription</button>
+          <button class="mom-btn-sm mom-btn-sm--ghost">Open Chat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRUST / SAFETY ================= -->
+<section class="mom-trust">
+  <div class="wrap">
+    <svg class="mom-trust__icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M24 4 L40 10 V22 C40 33 33 41 24 44 C15 41 8 33 8 22 V10 Z" stroke="#00D1FF" stroke-width="1.6"/>
+      <path d="M12 24 L18 24 L21 18 L25 30 L28 20 L31 24 L36 24" stroke="#0066FF" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <h3>Care you can rely on — and limits we're honest about</h3>
+      <p>MOM keeps you and your doctor connected between visits through continuous monitoring and secure messaging. It's built to support your care, not replace it. In an emergency, contact local emergency services or go to the nearest hospital directly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL CTA ================= -->
+<section class="mom-final">
+  <div class="mom-final__glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <h2>Your next check-in starts here.</h2>
+    <p>Register in a couple of minutes, or log in if you're already part of MOM.</p>
+    <div class="mom-cta-group">
+      <a href="login.html?role=patient" class="mom-btn mom-btn--primary">I'm a Patient</a>
+      <a href="login.html?role=doctor" class="mom-btn mom-btn--secondary">I'm a Doctor</a>
+      <a href="login.html" class="mom-btn mom-btn--ghost">Log in →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="mom-footer">
+  <div class="wrap">
+    <div class="mom-footer__mark">MOM<span>Maternal Observation &amp; Monitoring</span></div>
+    <div class="mom-footer__links">
+      <a href="login.html">Log in</a>
+      <a href="login.html?mode=register">Register</a>
+      <a href="#patients">For patients</a>
+      <a href="#doctors">For doctors</a>
+    </div>
+    <div class="mom-footer__copy">© <span id="mom-year"></span> MOM — Maternal Observation and Monitoring. Not a substitute for emergency medical care.</div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('mom-year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
