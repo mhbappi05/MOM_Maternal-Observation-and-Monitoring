@@ -1,0 +1,2 @@
+# Serve the MOM landing page first when visiting the project folder
+DirectoryIndex index.html index.php

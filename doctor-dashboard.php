@@ -1,14 +1,13 @@
 <?php
 session_start();
 include 'db.php';
+include 'connections_helper.php';
 
-// Check if the user is logged in and is a doctor
 if (!isset($_SESSION['id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'doctor') {
-    header("Location: login.html");
+    header("Location: index.html");
     exit();
 }
 
-// Fetch the doctor's name from the database
 $doctor_id = $_SESSION['id'];
 $stmt = $conn->prepare("SELECT name FROM users WHERE id = ?");
 if ($stmt) {
@@ -21,85 +20,57 @@ if ($stmt) {
     die("Database error: " . mysqli_error($conn));
 }
 
-// Handle search query
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-
-if (!empty($search)) {
-    // Search for patients matching name or phone
-    $sql = "SELECT id, name, phone FROM users WHERE role = 'patient' AND (name LIKE ? OR phone LIKE ?)";
-    $stmt = $conn->prepare($sql);
-    if ($stmt) {
-        $searchTerm = "%$search%";
-        $stmt->bind_param("ss", $searchTerm, $searchTerm);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $stmt->close();
-    } else {
-        echo "<p class='text-danger'>Error fetching patients: " . $conn->error . "</p>";
-    }
-} else {
-    // Fetch all patients if no search
-    $sql = "SELECT id, name, phone FROM users WHERE role = 'patient'";
-    $result = $conn->query($sql);
-    if (!$result) {
-        echo "<p class='text-danger'>Error fetching patients: " . $conn->error . "</p>";
-    }
+// Connected patients only
+$connected = [];
+$stmt = $conn->prepare(
+    "SELECT u.id, u.name, u.phone
+     FROM doctor_patient_connections c
+     JOIN users u ON u.id = c.patient_id
+     WHERE c.doctor_id = ? AND c.status = 'accepted'
+     ORDER BY u.name ASC"
+);
+$stmt->bind_param("i", $doctor_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $connected[] = $row;
 }
+$stmt->close();
 
-
-// Handle message submission
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['send_message'])) {
-    $receiver_id = $_POST['receiver_id'];
-    $message = trim($_POST['message']);
-
-    if (!empty($message)) {
-        $stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message, created_at) VALUES (?, ?, ?, NOW())");
-        if ($stmt) {
-            $stmt->bind_param("iis", $doctor_id, $receiver_id, $message);
-            if ($stmt->execute()) {
-                // Redirect to refresh the page and show the new message
-                header("Location: ?patient_id=" . $receiver_id);
-                exit();
-            } else {
-                echo "<script>console.log('Error sending message: " . $stmt->error . "');</script>";
-            }
-            $stmt->close();
-        } else {
-            echo "<script>console.log('Database prepare error: " . $conn->error . "');</script>";
-        }
-    }
+// Incoming pending requests
+$incoming = [];
+$stmt = $conn->prepare(
+    "SELECT u.id, u.name, u.phone, c.id AS connection_id
+     FROM doctor_patient_connections c
+     JOIN users u ON u.id = c.patient_id
+     WHERE c.doctor_id = ? AND c.status = 'pending' AND c.requested_by != ?
+     ORDER BY c.created_at DESC"
+);
+$stmt->bind_param("ii", $doctor_id, $doctor_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $incoming[] = $row;
 }
+$stmt->close();
 
-// Fetch messages between doctor and patient
-$patient_name = "";
-$messages = null; // Initialize variable
-
-if (isset($_GET['patient_id'])) {
-    $patient_id = $_GET['patient_id'];
-
-    // Get patient name
-    $stmt = $conn->prepare("SELECT name FROM users WHERE id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $patient_id);
-        $stmt->execute();
-        $stmt->bind_result($patient_name);
-        $stmt->fetch();
-        $stmt->close();
-    }
-
-    // Retrieve messages
-    $stmt = $conn->prepare("SELECT sender_id, message, created_at FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC");
-    if ($stmt) {
-        $stmt->bind_param("iiii", $doctor_id, $patient_id, $patient_id, $doctor_id);
-        $stmt->execute();
-        $messages = $stmt->get_result();
-        $stmt->close();
-    } else {
-        echo "<p class='text-danger'>Error fetching messages: " . $conn->error . "</p>";
-    }
+// Outgoing pending
+$outgoing = [];
+$stmt = $conn->prepare(
+    "SELECT u.id, u.name, u.phone
+     FROM doctor_patient_connections c
+     JOIN users u ON u.id = c.patient_id
+     WHERE c.doctor_id = ? AND c.status = 'pending' AND c.requested_by = ?
+     ORDER BY c.created_at DESC"
+);
+$stmt->bind_param("ii", $doctor_id, $doctor_id);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $outgoing[] = $row;
 }
+$stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -107,10 +78,11 @@ if (isset($_GET['patient_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2785/2785544.png">
-    <title>Doctor Dashboard | ECG Portal</title>
+    <title>Doctor Dashboard | MOM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="css/doctorstyle.css">
+    <link rel="stylesheet" href="css/connections.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
@@ -136,69 +108,109 @@ if (isset($_GET['patient_id'])) {
 
     <div class="container-fluid p-4" style="max-width: 1300px;">
         <h2>Welcome, Dr. <?= htmlspecialchars($doctor_name) ?></h2>
+        <p class="text-muted mb-4">Patients must accept your connection request (or you accept theirs) before you can monitor or message them.</p>
+
+        <?php if (count($incoming) > 0): ?>
+        <div class="card mt-4 border-warning">
+            <div class="card-header text-white bg-warning">
+                <h5 class="mb-0"><i class="bi bi-bell"></i> Incoming connection requests (<?= count($incoming) ?>)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($incoming as $req): ?>
+                            <tr data-user-id="<?= (int) $req['id'] ?>">
+                                <td><?= htmlspecialchars($req['name']) ?></td>
+                                <td><?= htmlspecialchars($req['phone']) ?></td>
+                                <td class="conn-actions">
+                                    <button type="button" class="btn btn-success btn-sm js-accept" data-user-id="<?= (int) $req['id'] ?>">Accept</button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm js-reject" data-user-id="<?= (int) $req['id'] ?>">Reject</button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <div class="card mt-4">
             <div class="card-header text-white">
-                <h5>Search for a Patient</h5>
+                <h5 class="mb-0">Find a patient</h5>
             </div>
             <div class="card-body">
-                <form method="GET" class="d-flex">
-                    <input type="text" name="search" class="form-control me-2" placeholder="Search by name or phone"
-                        value="<?= htmlspecialchars($search) ?>">
-                    <button type="submit" class="btn btn-primary">Search</button>
-                </form>
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="patientSearchInput" class="form-control" placeholder="Search by name or phone (min 2 characters)">
+                    <button type="button" id="patientSearchBtn" class="btn btn-primary">Search</button>
+                </div>
+                <div id="patientSearchResults" class="conn-search-results"></div>
+                <?php if (count($outgoing) > 0): ?>
+                <hr>
+                <h6>Pending requests you sent</h6>
+                <ul class="list-group">
+                    <?php foreach ($outgoing as $req): ?>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><?= htmlspecialchars($req['name']) ?> · <?= htmlspecialchars($req['phone']) ?></span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary js-cancel" data-user-id="<?= (int) $req['id'] ?>">Cancel</button>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
             </div>
         </div>
 
         <div class="card mt-4">
             <div class="card-header text-white">
-                <h5>Search Results</h5>
+                <h5 class="mb-0">My connected patients</h5>
             </div>
             <div class="card-body">
-                <?php if ($result && $result->num_rows > 0): ?>
-                    <table class="table table-hover mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Monitor</th>
-                                <th>Message</th>
-                            </tr>
-                        </thead>
-                    </table>
-
-                    <div style="max-height: 300px; overflow-y: auto;">
+                <?php if (count($connected) > 0): ?>
+                    <div style="max-height: 360px; overflow-y: auto;">
                         <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Monitor</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                <?php while ($patient = $result->fetch_assoc()): ?>
-                                    <tr>
-                                        <td><?= $patient['id'] ?></td>
-                                        <td><?= htmlspecialchars($patient['name']) ?></td>
-                                        <td><?= htmlspecialchars($patient['phone']) ?></td>
-                                        <td><a href="monitor_patient.php?id=<?= $patient['id'] ?>"
-                                                class="btn btn-success btn-sm">Monitor</a></td>
-                                        <td>
-                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                                data-bs-target="#messageModal" data-patient-id="<?= $patient['id'] ?>"
-                                                data-patient-name="<?= htmlspecialchars($patient['name']) ?>">
-                                                Message
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
+                                <?php foreach ($connected as $patient): ?>
+                                <tr>
+                                    <td><?= (int) $patient['id'] ?></td>
+                                    <td><?= htmlspecialchars($patient['name']) ?></td>
+                                    <td><?= htmlspecialchars($patient['phone']) ?></td>
+                                    <td><a href="monitor_patient.php?id=<?= (int) $patient['id'] ?>" class="btn btn-success btn-sm">Monitor</a></td>
+                                    <td>
+                                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#messageModal" data-patient-id="<?= (int) $patient['id'] ?>"
+                                            data-patient-name="<?= htmlspecialchars($patient['name']) ?>">
+                                            Message
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
-
                 <?php else: ?>
-                    <p>No patients found.</p>
+                    <p class="mb-0 text-muted">No connected patients yet. Search above and send a connection request.</p>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <!-- Message Modal -->
     <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -206,9 +218,7 @@ if (isset($_GET['patient_id'])) {
                     <h5 class="modal-title" id="patientName"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="messages-container" style="max-height: 300px; overflow-y: scroll;">
-                    <!-- Messages will be loaded here -->
-                </div>
+                <div class="modal-body" id="messages-container" style="max-height: 300px; overflow-y: scroll;"></div>
                 <div class="modal-footer">
                     <form id="chatForm" style="display: flex; width: 100%; gap: 1rem; align-items: center;">
                         <input type="hidden" name="receiver_id" id="receiver_id">
@@ -220,29 +230,15 @@ if (isset($_GET['patient_id'])) {
             </div>
         </div>
     </div>
-    <!-- Footer -->
+
     <footer class="footer bg-dark text-white text-center py-4 mt-4">
         <div class="container">
-            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All
-                rights reserved.</p>
-            <div class="social-icons">
-                <a href="https://facebook.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-facebook"></i>
-                </a>
-                <a href="https://instagram.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-instagram"></i>
-                </a>
-                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=mhbappi05@gmail.com" target="_blank"
-                    class="text-white mx-2">
-                    <i class="bi bi-envelope"></i>
-                </a>
-                <a href="https://github.com/mhbappi05" target="_blank" class="text-white mx-2">
-                    <i class="bi bi-github"></i>
-                </a>
-            </div>
+            <p class="mb-2">© <?php echo date("Y"); ?> MOM - Maternal Observation and Monitoring Dashboard. All rights reserved.</p>
         </div>
     </footer>
 
+    <script src="js/connections.js"></script>
+    <script src="js/doctor_connections.js"></script>
     <script src="js/doctor_messenger.js"></script>
     <script src="js/preloader.js"></script>
 </body>

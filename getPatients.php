@@ -1,11 +1,22 @@
 <?php
 include 'db.php';
+include 'connections_helper.php';
 session_start();
 
-// Assuming the doctor is logged in, and their ID is stored in session
-$doctor_id = $_SESSION['doctor_id'];
+header('Content-Type: application/json');
 
-$query = "SELECT id, name, phone FROM users WHERE role='patient' AND doctor_id=?";
+if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'doctor') {
+    echo json_encode([]);
+    exit();
+}
+
+$doctor_id = (int) $_SESSION['id'];
+
+$query = "SELECT u.id, u.name, u.phone
+          FROM doctor_patient_connections c
+          JOIN users u ON u.id = c.patient_id
+          WHERE c.doctor_id = ? AND c.status = 'accepted' AND u.role = 'patient'
+          ORDER BY u.name ASC";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $doctor_id);
 $stmt->execute();

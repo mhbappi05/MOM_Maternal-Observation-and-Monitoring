@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'db.php'; // ensure schema (users.role, connections, messages)
 
 // Database connection
 $host = "localhost";
@@ -16,7 +17,7 @@ try {
 
 // Check if user is logged in
 if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
+    header("Location: index.html");
     exit();
 }
 
@@ -34,35 +35,50 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 $username = $user ? $user['name'] : "Guest";
 
 
-// Fetch doctors' list (only those with 'doctor' role)
-$stmt = $pdo->prepare("SELECT id, name FROM users WHERE role = 'doctor'");
-$stmt->execute();
+// Connected doctors only (accepted consent)
+$stmt = $pdo->prepare(
+    "SELECT u.id, u.name
+     FROM doctor_patient_connections c
+     JOIN users u ON u.id = c.doctor_id
+     WHERE c.patient_id = ? AND c.status = 'accepted'
+     ORDER BY u.name ASC"
+);
+$stmt->execute([$user_id]);
 $doctors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Generate HTML for doctor list
 $doctorListHTML = '';
-foreach ($doctors as $doctor) {
-    $doctorListHTML .= '<li><button class="btn btn-link doctor-item" data-doctor-id="' . $doctor['id'] . '">' . htmlspecialchars($doctor['name']) . '</button></li>';
+if ($doctors) {
+    foreach ($doctors as $doctor) {
+        $doctorListHTML .= '<li><button class="btn btn-link doctor-item" data-doctor-id="' . (int) $doctor['id'] . '" data-doctor-name="' . htmlspecialchars($doctor['name'], ENT_QUOTES) . '">' . htmlspecialchars($doctor['name']) . '</button></li>';
+    }
+} else {
+    $doctorListHTML = '<li class="text-muted px-2">No connected doctors yet. Use “Find &amp; add doctor” below.</li>';
 }
 
 // Fetch the conversation between the logged-in user and the selected doctor
 $conversationMessages = '';
 if (isset($_GET['doctor_id'])) {
-    $doctor_id = $_GET['doctor_id'];  // Get the doctor ID from the URL
+    $doctor_id = (int) $_GET['doctor_id'];
 
-    // Fetch messages for the selected doctor
-    $stmt = $pdo->prepare("SELECT sender_id, message, created_at FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC");
-    $stmt->execute([$user_id, $doctor_id, $doctor_id, $user_id]);
-    $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $check = $pdo->prepare(
+        "SELECT id FROM doctor_patient_connections
+         WHERE doctor_id = ? AND patient_id = ? AND status = 'accepted' LIMIT 1"
+    );
+    $check->execute([$doctor_id, $user_id]);
+    if ($check->fetch()) {
+        $stmt = $pdo->prepare("SELECT sender_id, message, created_at FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at ASC");
+        $stmt->execute([$user_id, $doctor_id, $doctor_id, $user_id]);
+        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Loop through messages and generate HTML
-    foreach ($messages as $msg) {
-        $senderName = ($msg['sender_id'] == $user_id) ? "You" : "Doctor";
-        $conversationMessages .= "<div class='message'>";
-        $conversationMessages .= "<strong>" . htmlspecialchars($senderName) . ":</strong>";
-        $conversationMessages .= "<p>" . htmlspecialchars($msg['message']) . "</p>";
-        $conversationMessages .= "<small>" . htmlspecialchars($msg['created_at']) . "</small>";
-        $conversationMessages .= "</div>";
+        foreach ($messages as $msg) {
+            $senderName = ($msg['sender_id'] == $user_id) ? "You" : "Doctor";
+            $conversationMessages .= "<div class='message'>";
+            $conversationMessages .= "<strong>" . htmlspecialchars($senderName) . ":</strong>";
+            $conversationMessages .= "<p>" . htmlspecialchars($msg['message']) . "</p>";
+            $conversationMessages .= "<small>" . htmlspecialchars($msg['created_at']) . "</small>";
+            $conversationMessages .= "</div>";
+        }
     }
 }
 
@@ -116,6 +132,7 @@ if ($records) {
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/chatbot.css"> <!-- Chatbot CSS -->
     <link rel="stylesheet" href="css/messenger.css"> <!-- messenger CSS -->
+    <link rel="stylesheet" href="css/connections.css">
 </head>
 
 <body>
@@ -177,6 +194,35 @@ if ($records) {
             </div>
         </div>
 
+        <!-- Doctor connections (consent-based) -->
+        <div class="conn-panel" id="doctorConnectionsPanel">
+            <h5><i class="bi bi-people"></i> Your doctors</h5>
+            <p class="conn-empty mb-3">Search by name or phone, send a request, and message only after both sides are connected.</p>
+
+            <div class="conn-tabs" role="tablist">
+                <button type="button" class="active" data-conn-tab="connected">Connected</button>
+                <button type="button" data-conn-tab="incoming">Requests</button>
+                <button type="button" data-conn-tab="find">Find &amp; add</button>
+            </div>
+
+            <div id="connTabConnected">
+                <ul class="conn-list" id="patientConnectedList"></ul>
+            </div>
+            <div id="connTabIncoming" style="display:none;">
+                <h6 class="mt-2">Incoming</h6>
+                <ul class="conn-list" id="patientIncomingList"></ul>
+                <h6 class="mt-3">Sent by you</h6>
+                <ul class="conn-list" id="patientOutgoingList"></ul>
+            </div>
+            <div id="connTabFind" style="display:none;">
+                <div class="d-flex gap-2 mb-3">
+                    <input type="text" id="doctorSearchInput" class="form-control" placeholder="Doctor name or phone">
+                    <button type="button" id="doctorSearchBtn" class="btn btn-primary">Search</button>
+                </div>
+                <div id="doctorSearchResults" class="conn-search-results"></div>
+            </div>
+        </div>
+
         <!-- Messenger UI -->
         <div class="messenger-container" id="messengerContainer" style="display: none;">
             <div class="messenger-header d-flex align-items-center">
@@ -190,7 +236,7 @@ if ($records) {
 
             <!-- Doctor List -->
             <div id="doctorList" style="display: block;">
-                <h5>Select a Doctor</h5>
+                <h5>Select a connected doctor</h5>
                 <ul id="doctorListItems">
                     <!-- Doctors will be loaded here -->
                     <?php echo $doctorListHTML; ?>
@@ -340,6 +386,8 @@ if ($records) {
         <script src="js/preloader.js"></script>
         <script src="js/chatbot.js"></script>
         <script src="js/ecg.js"></script>
+        <script src="js/connections.js"></script>
+        <script src="js/patient_connections.js"></script>
         <script src="js/messenger.js"></script>
 </body>
 

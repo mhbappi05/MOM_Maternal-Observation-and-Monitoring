@@ -109,9 +109,28 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     if (suggestions.length === 0)
       suggestions.push("Vitals are stable. Keep monitoring.");
-    document.getElementById("health_suggestions").innerHTML = suggestions
-      .map((s) => `<p>${s}</p>`)
-      .join("");
+    // Send vitals to backend for AI suggestions
+fetch("health_suggestions.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        heart_rate: vitals.mother_heart_rate.toFixed(0),
+        blood_pressure: `${vitals.mother_bp_sys}/${vitals.mother_bp_dia}`,
+        temperature: vitals.mother_temp.toFixed(1),
+        fetal_movement: vitals.fetal_movement,
+        oxygen: vitals.mother_oxygen.toFixed(0)
+    })
+})
+.then(res => res.json())
+.then(data => {
+    const aiReply = data.choices?.[0]?.message?.content || "Unable to get suggestions.";
+    document.getElementById("health_suggestions").innerHTML = `<p>${aiReply}</p>`;
+})
+.catch(err => {
+    console.error("Error fetching AI suggestions:", err);
+    document.getElementById("health_suggestions").innerHTML = `<p>Error loading AI suggestions.</p>`;
+});
+
 
     const now = new Date();
     document.getElementById("last-update").textContent = now.toLocaleTimeString(
@@ -128,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  setInterval(updateVitalsUI, 5000);
+  setInterval(updateVitalsUI, 10000);
   updateVitalsUI();
 
   // Logout button

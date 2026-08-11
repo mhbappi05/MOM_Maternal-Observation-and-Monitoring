@@ -1,43 +1,49 @@
 <?php
 session_start();
+include 'db.php';
+include 'connections_helper.php';
 
-// Database connection
-$host = "localhost";
-$dbname = "ecg_monitoring";
-$username = "root";
-$password = "";
+header('Content-Type: application/json');
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonResponse(['status' => 'error', 'message' => 'Invalid request method'], 405);
 }
 
-// Check if the request is POST and necessary parameters are present
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $receiver_id = isset($_POST['doctor_id']) ? $_POST['doctor_id'] : null;  // doctor_id will be receiver
-    $sender_id = isset($_SESSION['id']) ? $_SESSION['id'] : null;  // user_id will be sender
-    $message = isset($_POST['message']) ? $_POST['message'] : '';
+requireLogin();
 
-    // Check if the required fields are present
-    if ($receiver_id && $sender_id && $message) {
-        try {
-            var_dump($_POST);
+$receiver_id = isset($_POST['doctor_id']) ? (int) $_POST['doctor_id'] : 0;
+$sender_id = (int) $_SESSION['id'];
+$message = isset($_POST['message']) ? trim($_POST['message']) : '';
 
-            // Insert the message into the database
-            $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message, created_at) VALUES (?, ?, ?, NOW())");
-            $stmt->execute([$sender_id, $receiver_id, $message]);
-
-            echo "Message sent!";
-            echo json_encode(["status" => "success", "message" => "Message sent!"]);
-
-        } catch (PDOException $e) {
-            echo "Error inserting message: " . $e->getMessage();
-        }
-    } else {
-        echo "Missing required parameters!";
-    }
-} else {
-    echo "Invalid request method!";
+if (!$receiver_id || $message === '') {
+    jsonResponse(['status' => 'error', 'message' => 'Missing required parameters'], 400);
 }
+
+$pair = resolveDoctorPatientPair($conn, $sender_id, $receiver_id);
+if (!$pair) {
+    jsonResponse(['status' => 'error', 'message' => 'Invalid recipient'], 400);
+}
+[$doctorId, $patientId] = $pair;
+
+if (!areConnected($conn, $doctorId, $patientId)) {
+    jsonResponse([
+        'status' => 'error',
+        'message' => 'You must be connected before messaging. Send or accept a connection request first.'
+    ], 403);
+}
+
+$stmt = $conn->prepare(
+    "INSERT INTO messages (sender_id, receiver_id, message, created_at) VALUES (?, ?, ?, NOW())"
+);
+if (!$stmt) {
+    jsonResponse(['status' => 'error', 'message' => $conn->error], 500);
+}
+$stmt->bind_param("iis", $sender_id, $receiver_id, $message);
+$ok = $stmt->execute();
+$stmt->close();
+
+if ($ok) {
+    jsonResponse(['status' => 'success', 'message' => 'Message sent!']);
+}
+jsonResponse(['status' => 'error', 'message' => 'Failed to send message'], 500);
+?>

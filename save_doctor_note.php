@@ -4,7 +4,8 @@ ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
 session_start();
-include 'db.php'; // make sure $conn = new mysqli(...)
+include 'db.php';
+include 'connections_helper.php';
 
 if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'doctor') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -18,6 +19,11 @@ $note_content = trim($_POST['note_content'] ?? '');
 
 if (!$patient_id || $note_title === '' || $note_content === '') {
     echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+    exit();
+}
+
+if (!areConnected($conn, $doctor_id, $patient_id)) {
+    echo json_encode(['success' => false, 'message' => 'Not connected with this patient']);
     exit();
 }
 

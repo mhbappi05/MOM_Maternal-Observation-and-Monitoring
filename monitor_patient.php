@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'db.php'; // $conn is your mysqli connection
+include 'db.php';
+include 'connections_helper.php';
 
 // Enable error reporting for debugging (remove in production)
 error_reporting(E_ALL);
@@ -18,6 +19,12 @@ $doctor_id = (int) $_SESSION['id'];
 $patient_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if (!$patient_id) {
     die("Invalid patient ID. Please provide a valid patient ID.");
+}
+
+// --- Consent: doctor must be connected to this patient ---
+if (!areConnected($conn, $doctor_id, $patient_id)) {
+    http_response_code(403);
+    die("Access denied. You must have an accepted connection with this patient before viewing their data. <a href='doctor-dashboard.php'>Back to dashboard</a>");
 }
 
 // --- Fetch patient info ---

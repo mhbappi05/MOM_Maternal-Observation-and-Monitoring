@@ -1,32 +1,47 @@
 <?php
 include 'db.php';
+include 'connections_helper.php';
 session_start();
 
-$doctor_id = $_SESSION['doctor_id'];
-$patient_id = $_GET['patient_id'];  // Patient ID passed from the frontend
+header('Content-Type: application/json');
 
-// Check if the patient belongs to the doctor
-$query = "SELECT * FROM users WHERE id=? AND doctor_id=?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("ii", $patient_id, $doctor_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    // Fetch the patient's data
-    $patient_data = [
-        'ecg_data' => 'ECG Data Here', // Replace with actual data retrieval
-        'oxygen_level' => 98.5, // Replace with actual data
-        'heart_rate' => 72, // Replace with actual data
-        'blood_pressure' => '120/80', // Replace with actual data
-        'status' => 'normal' // Replace with actual data
-    ];
-
-    echo json_encode($patient_data);
-} else {
-    echo json_encode(['error' => 'Patient not found or not assigned to this doctor.']);
+if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'doctor') {
+    echo json_encode(['error' => 'Unauthorized']);
+    exit();
 }
 
-$stmt->close();
+$doctor_id = (int) $_SESSION['id'];
+$patient_id = isset($_GET['patient_id']) ? (int) $_GET['patient_id'] : 0;
+
+if (!$patient_id || !areConnected($conn, $doctor_id, $patient_id)) {
+    echo json_encode(['error' => 'Patient not found or not connected to this doctor.']);
+    exit();
+}
+
+$table = 'patient_' . $patient_id . '_data';
+$check = $conn->query("SHOW TABLES LIKE '" . $conn->real_escape_string($table) . "'");
+if (!$check || $check->num_rows === 0) {
+    echo json_encode(['error' => 'No vitals table for this patient.']);
+    exit();
+}
+
+$result = $conn->query("SELECT * FROM `$table` ORDER BY timestamp DESC LIMIT 1");
+$row = $result ? $result->fetch_assoc() : null;
+
+if (!$row) {
+    echo json_encode(['error' => 'No vitals recorded yet.']);
+    exit();
+}
+
+echo json_encode([
+    'heart_rate' => $row['heart_rate'] ?? null,
+    'oxygen_saturation' => $row['oxygen_saturation'] ?? null,
+    'blood_pressure' => $row['blood_pressure'] ?? null,
+    'body_temperature' => $row['body_temperature'] ?? null,
+    'fetal_movement' => $row['fetal_movement'] ?? null,
+    'status' => $row['status'] ?? 'normal',
+    'timestamp' => $row['timestamp'] ?? null,
+]);
+
 $conn->close();
 ?>
