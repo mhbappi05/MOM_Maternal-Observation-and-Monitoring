@@ -3,71 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECG Analysis Portal</title>
+    <title>MOM — Maternal Observation & Monitoring | Login / Register</title>
+
+    <!-- Typography matching landing page -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="css/styleLogin.css">
 </head>
 <body>
-    <div class="medical-illustration"></div>
-    <div class="medical-icons">
-        <div class="medical-icon"></div>
-        <div class="medical-icon"></div>
-        <div class="medical-icon"></div>
-        <div class="medical-icon"></div>
-    </div>
-    
-    <div class="container">
-        <div class="logo-container">
-            <svg class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="48" stroke="#0066FF" stroke-width="4"/>
-                <path d="M20 50h10l10-20l20 40l10-20h10" stroke="#0066FF" stroke-width="4" stroke-linecap="round"/>
-            </svg>
-            <h1 class="app-title">ECG Analysis Portal</h1>
+
+    <!-- Ambient background layer -->
+    <div class="mom-auth-atmosphere"></div>
+
+    <!-- Animated ECG Pulse Wave -->
+    <svg class="mom-bg-ecg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <defs>
+            <linearGradient id="authEcgGrad" x1="0" y1="0" x2="1200" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#0066FF" />
+                <stop offset="100%" stop-color="#00D1FF" />
+            </linearGradient>
+        </defs>
+        <path d="M0,60 L400,60 L415,20 L430,100 L445,30 L460,75 L475,60 L1200,60" />
+    </svg>
+
+    <!-- Main Dual-Panel Auth Container -->
+    <div class="auth-wrapper">
+        
+        <!-- Left Side Banner Image (Desktop) -->
+        <div class="auth-banner">
+            <!-- Updated Unsplash photo with warmer, clinical setting -->
+            <img src="https://images.unsplash.com/photo-1531983412531-1f49a365ffed?auto=format&fit=crop&w=1000&q=80" alt="MOM Patient Care" class="auth-banner__img" />
+            <div class="auth-banner__overlay"></div>
+        
+            <!-- Brand Header -->
+            <div class="auth-banner__content">
+                <a href="index.html" class="auth-banner__logo">
+                    MOM
+                    <svg class="auth-banner__heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                </a>
+                <div class="auth-banner__tagline">Maternal Observation &amp; Monitoring</div>
+            </div>
+        
+            <!-- Animated Quote & Details -->
+            <div class="auth-banner__quote">
+                <p>“Closer care for every heartbeat.”</p>
+                <span>Continuous remote vitals monitoring connecting expectant mothers directly with their care providers.</span>
+            </div>
         </div>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('login')">Login</div>
-            <div class="tab" onclick="switchTab('register')">Register</div>
+        <!-- Right Side Form Panel -->
+        <div class="container">
+            <div class="logo-container">
+                <a href="index.html" style="text-decoration: none;">
+                    <svg class="logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="46" stroke="#0066FF" stroke-width="5"/>
+                        <path d="M20 50h12l8-22l16 44l12-22h12" stroke="#00D1FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <h1 class="app-title">Welcome to MOM</h1>
+                <p class="app-subtitle">Access your remote maternal health care portal</p>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('login')">Log In</div>
+                <div class="tab" onclick="switchTab('register')">Register</div>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="loginForm" class="form active" action="login.php" method="POST">
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" name="phone" pattern="[0-9]{11}" placeholder="Enter 11-digit phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit">Log In</button>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="registerForm" class="form" action="register.php" method="POST">
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" name="name" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPhone">Phone Number</label>
+                    <input type="tel" id="registerPhone" name="phone" pattern="[0-9]{11}" placeholder="Enter 11-digit phone number" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" name="password" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+                </div>
+                
+                <!-- Role selection (Doctor or Patient) -->
+                <div class="form-group">
+                    <label for="role">I am a:</label>
+                    <select id="role" name="role" required>
+                        <option value="patient">Patient</option>
+                        <option value="doctor">Doctor</option>
+                    </select>
+                </div>
+                <button type="submit">Create Account</button>
+            </form>
+
+            <div class="auth-footer-text">
+                <a href="index.html">← Back to MOM Home</a>
+            </div>
         </div>
-
-        <form id="loginForm" class="form active" action="login.php" method="POST">
-            <div class="form-group">
-                <label for="loginPhone">Phone Number</label>
-                <input type="tel" id="loginPhone" name="phone" pattern="[0-9]{11}" placeholder="Enter 11 digit number" required>
-            </div>
-            <div class="form-group">
-                <label for="loginPassword">Password</label>
-                <input type="password" id="loginPassword" name="password" placeholder="Enter your password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-
-        <form id="registerForm" class="form" action="register.php" method="POST">
-            <div class="form-group">
-                <label for="registerName">Full Name</label>
-                <input type="text" id="registerName" name="name" placeholder="Enter your full name" required>
-            </div>
-            <div class="form-group">
-                <label for="registerPhone">Phone Number</label>
-                <input type="tel" id="registerPhone" name="phone" pattern="[0-9]{11}" placeholder="Enter 11 digit number" required>
-            </div>
-            <div class="form-group">
-                <label for="registerPassword">Password</label>
-                <input type="password" id="registerPassword" name="password" placeholder="Create a password" required>
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
-            </div>
-            <!-- Role selection (Doctor or Patient) -->
-            <div class="form-group">
-                <label for="role">I am a:</label>
-                <select id="role" name="role" required>
-                    <option value="doctor">Doctor</option>
-                    <option value="patient">Patient</option>
-                </select>
-            </div>
-            <button type="submit">Register</button>
-        </form>
     </div>
 
     <script>
@@ -83,6 +135,23 @@
                 document.getElementById('registerForm').classList.add('active');
             }
         }
+
+        // Auto-select role or mode based on URL query parameters (e.g. login.html?role=doctor)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get('role');
+            const mode = urlParams.get('mode');
+
+            if (role) {
+                const roleSelect = document.getElementById('role');
+                if (roleSelect) {
+                    roleSelect.value = role;
+                }
+                switchTab('register'); // Switch directly to registration if coming from role CTA
+            } else if (mode === 'register') {
+                switchTab('register');
+            }
+        });
     </script>
 </body>
 </html>
