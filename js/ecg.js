@@ -109,27 +109,46 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     if (suggestions.length === 0)
       suggestions.push("Vitals are stable. Keep monitoring.");
-    // Send vitals to backend for AI suggestions
-fetch("health_suggestions.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+
+    const localHtml = `<p>${suggestions.join("<br>")}</p><p class="text-muted small mb-0">Refreshing AI guidance…</p>`;
+    const box = document.getElementById("health_suggestions");
+    if (box) box.innerHTML = localHtml;
+
+    // Send vitals to backend for AI suggestions (falls back to local tips if AI unavailable)
+    fetch("health_suggestions.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         heart_rate: vitals.mother_heart_rate.toFixed(0),
         blood_pressure: `${vitals.mother_bp_sys}/${vitals.mother_bp_dia}`,
         temperature: vitals.mother_temp.toFixed(1),
         fetal_movement: vitals.fetal_movement,
-        oxygen: vitals.mother_oxygen.toFixed(0)
+        oxygen: vitals.mother_oxygen.toFixed(0),
+      }),
     })
-})
-.then(res => res.json())
-.then(data => {
-    const aiReply = data.choices?.[0]?.message?.content || "Unable to get suggestions.";
-    document.getElementById("health_suggestions").innerHTML = `<p>${aiReply}</p>`;
-})
-.catch(err => {
-    console.error("Error fetching AI suggestions:", err);
-    document.getElementById("health_suggestions").innerHTML = `<p>Error loading AI suggestions.</p>`;
-});
+      .then(async (res) => {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          throw new Error("Invalid suggestions response");
+        }
+      })
+      .then((data) => {
+        const aiReply =
+          data.choices?.[0]?.message?.content ||
+          data.suggestion ||
+          suggestions.join(" ");
+        if (box) {
+          box.innerHTML = `<p>${String(aiReply).replace(/\n/g, "<br>")}</p>`;
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching AI suggestions:", err);
+        if (box) {
+          box.innerHTML = `<p>${suggestions.join("<br>")}</p><p class="text-muted small mb-0">AI temporarily unavailable — showing local guidance.</p>`;
+        }
+      });
 
 
     const now = new Date();
