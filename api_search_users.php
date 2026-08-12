@@ -17,6 +17,11 @@ if ($q === '' || strlen($q) < 2) {
 
 $me = (int) $_SESSION['id'];
 $myRole = $_SESSION['role'];
+
+if (!in_array($myRole, ['doctor', 'patient'], true)) {
+    jsonResponse(['success' => false, 'message' => 'Only doctors and patients can search for connections.'], 403);
+}
+
 $targetRole = $myRole === 'doctor' ? 'patient' : 'doctor';
 $like = '%' . $q . '%';
 

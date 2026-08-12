@@ -340,6 +340,11 @@
     text-decoration: none;
     font-weight: 500;
   }
+
+  .auth-footer-sep {
+    margin: 0 0.4rem;
+    opacity: 0.55;
+  }
   
   .auth-footer-text a:hover {
     text-decoration: underline;

@@ -15,8 +15,8 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Check if user is logged in
-if (!isset($_SESSION['id'])) {
+// Check if user is logged in as patient
+if (!isset($_SESSION['id']) || ($_SESSION['role'] ?? '') !== 'patient') {
     header("Location: index.html");
     exit();
 }
@@ -383,12 +383,14 @@ if ($records) {
             </div>
         </footer>
 
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="js/preloader.js"></script>
         <script src="js/chatbot.js"></script>
         <script src="js/ecg.js"></script>
         <script src="js/connections.js"></script>
         <script src="js/patient_connections.js"></script>
         <script src="js/messenger.js"></script>
+        <script src="js/report.js"></script>
 </body>
 
 </html>

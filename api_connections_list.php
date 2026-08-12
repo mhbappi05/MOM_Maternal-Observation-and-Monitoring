@@ -12,6 +12,10 @@ requireLogin();
 $me = (int) $_SESSION['id'];
 $myRole = $_SESSION['role'];
 
+if (!in_array($myRole, ['doctor', 'patient'], true)) {
+    jsonResponse(['success' => false, 'message' => 'Only doctors and patients have connection lists.'], 403);
+}
+
 if ($myRole === 'doctor') {
     $sql = "SELECT c.id AS connection_id, c.status, c.requested_by, c.created_at, c.updated_at,
                    u.id AS user_id, u.name, u.phone, u.role

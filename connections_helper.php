@@ -1,6 +1,6 @@
 <?php
 /**
- * Consent-based doctor–patient connection helpers.
+ * Consent-based doctor–patient connection helpers + auth gates.
  */
 
 function requireLogin(): void
@@ -9,6 +9,30 @@ function requireLogin(): void
         http_response_code(401);
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit();
+    }
+}
+
+function requireRole(string $role): void
+{
+    requireLogin();
+    if (($_SESSION['role'] ?? '') !== $role) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Forbidden']);
+        exit();
+    }
+}
+
+function requireAdmin(): void
+{
+    requireRole('admin');
+}
+
+function requireAdminPage(): void
+{
+    if (!isset($_SESSION['id'], $_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+        header('Location: login.html');
         exit();
     }
 }

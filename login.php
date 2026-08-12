@@ -2,41 +2,51 @@
 include 'db.php';
 session_start();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $phone = $_POST['phone'];
-    $password = $_POST['password'];
-
-    // Check user role
-    $stmt = $conn->prepare("SELECT id, password, role FROM users WHERE phone = ?");
-    $stmt->bind_param("s", $phone);
-    $stmt->execute();
-    $stmt->store_result();
-    
-    if ($stmt->num_rows > 0) {
-        $stmt->bind_result($id, $hashed_password, $role);
-        $stmt->fetch();
-        
-        if (password_verify($password, $hashed_password)) {
-            $_SESSION['id'] = $id;
-            $_SESSION['role'] = $role;
-
-            // Redirect based on role
-            if ($role === 'patient') {
-                header("Location: ecg.php");
-            } elseif ($role === 'doctor') {
-                header("Location: doctor-dashboard.php");
-            } else {
-                echo "Invalid role assigned.";
-            }
-            exit();
-        } else {
-            echo "Invalid credentials. <a href='login.html'>Try again</a>";
-        }
-    } else {
-        echo "No user found with this phone number.";
-    }
-
-    $stmt->close();
-    $conn->close();
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    header("Location: login.html");
+    exit();
 }
+
+$phone = trim($_POST['phone'] ?? '');
+$password = $_POST['password'] ?? '';
+
+$stmt = $conn->prepare("SELECT id, password, role, is_active FROM users WHERE phone = ? LIMIT 1");
+if (!$stmt) {
+    die("Database error: " . $conn->error);
+}
+
+$stmt->bind_param("s", $phone);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+$stmt->close();
+
+if (!$user) {
+    echo "No user found with this phone number. <a href='login.html'>Try again</a>";
+    exit();
+}
+
+if (!(int) $user['is_active']) {
+    echo "This account has been disabled. Contact the administrator. <a href='login.html'>Back</a>";
+    exit();
+}
+
+if (!password_verify($password, $user['password'])) {
+    echo "Invalid credentials. <a href='login.html'>Try again</a>";
+    exit();
+}
+
+$_SESSION['id'] = (int) $user['id'];
+$_SESSION['role'] = $user['role'];
+
+if ($user['role'] === 'patient') {
+    header("Location: ecg.php");
+} elseif ($user['role'] === 'doctor') {
+    header("Location: doctor-dashboard.php");
+} elseif ($user['role'] === 'admin') {
+    header("Location: admin-dashboard.php");
+} else {
+    echo "Invalid role assigned.";
+}
+exit();
 ?>

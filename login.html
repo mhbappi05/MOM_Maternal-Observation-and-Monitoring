@@ -118,6 +118,8 @@
 
             <div class="auth-footer-text">
                 <a href="index.html">← Back to MOM Home</a>
+                <span class="auth-footer-sep">·</span>
+                <a href="login.html?mode=admin" title="Administrators only">Admin login</a>
             </div>
         </div>
     </div>
@@ -141,6 +143,15 @@
             const urlParams = new URLSearchParams(window.location.search);
             const role = urlParams.get('role');
             const mode = urlParams.get('mode');
+
+            if (mode === 'admin') {
+                switchTab('login');
+                const subtitle = document.querySelector('.app-subtitle');
+                if (subtitle) {
+                    subtitle.textContent = 'Administrator access — use your admin phone & password';
+                }
+                return;
+            }
 
             if (role) {
                 const roleSelect = document.getElementById('role');

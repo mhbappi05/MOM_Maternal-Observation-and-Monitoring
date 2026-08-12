@@ -7,7 +7,7 @@ if ($conn->connect_error) {
 }
 
 // Use $_SESSION['id'] instead of 'patient_id'
-if (!isset($_SESSION["id"])) {
+if (!isset($_SESSION["id"]) || ($_SESSION['role'] ?? '') !== 'patient') {
     echo "Error: Patient not identified.";
     exit;
 }

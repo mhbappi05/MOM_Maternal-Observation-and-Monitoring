@@ -22,6 +22,18 @@
 - In-app messaging, contact notes, and medication messages
 - Private clinical notes per patient
 
+### For admins
+- Platform stats (patients, doctors, connections)
+- Marketing analytics: signups trends, messaging activity, vitals adoption, top active users
+- Search, create, edit, enable/disable, and delete patients & doctors
+- Reset user passwords
+- Force-accept / reject / remove doctor–patient connections
+- Review and respond to user reports
+- Admin cannot be self-registered from the public form
+
+### Reporting
+Patients and doctors can submit reports to admin (bugs, abuse, privacy, account issues, feature requests) from a floating **Report** button on their dashboards.
+
 ### Consent-based connections
 Patients and doctors are **not** globally visible to each other.
 
@@ -128,6 +140,20 @@ This loads the **landing page** (`index.html`). Login / register from there.
 - **Patient:** Consult / message connected doctors  
 - **Doctor:** **Monitor** vitals and **Message** connected patients only  
 
+### Admin login (default seed account)
+On first database bootstrap, if no admin exists, one is created:
+
+| Field | Value |
+|--------|--------|
+| Phone | `01000000000` |
+| Password | `Admin@123` |
+
+1. Open [http://localhost/ECG_Monitoring/login.html?mode=admin](http://localhost/ECG_Monitoring/login.html?mode=admin)  
+2. Log in with the credentials above  
+3. You are redirected to `admin-dashboard.php`  
+
+**Change this password after first login in production/demo setups.**
+
 ---
 
 ## Project structure
@@ -136,22 +162,25 @@ This loads the **landing page** (`index.html`). Login / register from there.
 ECG_Monitoring/
 ├── index.html                 # Landing page
 ├── login.html / login.php     # Auth UI + login handler
-├── register.php               # Registration
+├── register.php               # Registration (patient/doctor only)
 ├── logout.php
 ├── ecg.php                    # Patient dashboard
 ├── doctor-dashboard.php       # Doctor dashboard
+├── admin-dashboard.php        # Admin control panel
 ├── monitor_patient.php        # Remote patient monitoring
-├── db.php                     # DB connection + schema bootstrap
-├── connections_helper.php     # Consent / connection helpers
+├── db.php                     # DB connection + schema bootstrap + admin seed
+├── connections_helper.php     # Auth + consent helpers
 ├── api_search_users.php       # Search opposite role
 ├── api_connection.php         # Send / accept / reject / cancel
 ├── api_connections_list.php   # List connections & requests
+├── api_admin_users.php        # Admin user management API
+├── api_admin_connections.php  # Admin connection management API
 ├── send_message.php           # Messaging (connection-gated)
 ├── get_messages.php
 ├── save_vitals.php
 ├── save_doctor_note.php
-├── css/                       # Styles (landing, dashboards, connections)
-├── js/                        # Frontend scripts
+├── css/                       # Styles (landing, dashboards, admin, connections)
+├── js/                        # Frontend scripts (incl. admin.js)
 └── README.md
 ```
 
@@ -159,14 +188,15 @@ ECG_Monitoring/
 
 ## Roles & access
 
-| Action | Patient | Doctor | Requires connection? |
-|--------|---------|--------|----------------------|
-| View own vitals | ✅ | — | — |
-| Search opposite role | ✅ | ✅ | No |
-| Send connection request | ✅ | ✅ | No |
-| Message | ✅ | ✅ | **Yes** |
-| Monitor patient data | — | ✅ | **Yes** |
-| Doctor notes / prescribe message | — | ✅ | **Yes** |
+| Action | Patient | Doctor | Admin | Requires connection? |
+|--------|---------|--------|-------|----------------------|
+| View own vitals | ✅ | — | — | — |
+| Search opposite role | ✅ | ✅ | — | No |
+| Send connection request | ✅ | ✅ | — | No |
+| Message | ✅ | ✅ | — | **Yes** |
+| Monitor patient data | — | ✅ | — | **Yes** |
+| Manage users (CRUD / disable) | — | — | ✅ | — |
+| Manage all connections | — | — | ✅ | — |
 
 ---
 
@@ -177,6 +207,7 @@ ECG_Monitoring/
 - **Patient dashboard** — vitals, charts, doctor connections, messenger, health assistant  
 - **Doctor dashboard** — requests, search, connected patients  
 - **Patient monitor** — detailed vitals view for a connected patient  
+- **Admin dashboard** — stats, user management, connection oversight  
 
 ---
 
@@ -184,7 +215,9 @@ ECG_Monitoring/
 
 - Passwords are hashed with PHP `password_hash()` / `password_verify()`
 - Messaging and patient-data endpoints check for an **accepted** connection
-- This project is intended for **local / academic / demo** use; harden further before any production deployment (HTTPS, prepared statements everywhere, CSRF, env-based secrets, etc.)
+- Public registration cannot create `admin` accounts
+- Disabled users (`is_active = 0`) cannot log in
+- This project is intended for **local / academic / demo** use; harden further before any production deployment (HTTPS, CSRF, env-based secrets, change default admin password, etc.)
 
 ---
 

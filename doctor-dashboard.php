@@ -241,6 +241,7 @@ $stmt->close();
     <script src="js/doctor_connections.js"></script>
     <script src="js/doctor_messenger.js"></script>
     <script src="js/preloader.js"></script>
+    <script src="js/report.js"></script>
 </body>
 
 </html>

@@ -5,14 +5,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST['name'];
     $phone = $_POST['phone'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = $_POST['role'];  // doctor or patient
+    $role = $_POST['role'] ?? '';  // doctor or patient only
+
+    // Public registration cannot create admin accounts
+    if (!in_array($role, ['patient', 'doctor'], true)) {
+        echo "Invalid role. Please register as Patient or Doctor. <a href='login.html'>Back</a>";
+        exit();
+    }
 
     // Begin transaction
     $conn->begin_transaction();
     
     try {
         // Prepare insert statement
-        $stmt = $conn->prepare("INSERT INTO users (name, phone, password, role) VALUES (?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (name, phone, password, role, is_active) VALUES (?, ?, ?, ?, 1)");
         
         if ($stmt === false) {
             throw new Exception("Error preparing statement: " . $conn->error);
