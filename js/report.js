@@ -66,12 +66,19 @@
       style.textContent = `
         .report-fab {
           position: fixed;
-          right: 18px;
-          bottom: 18px;
-          z-index: 1050;
+          left: 20px;
+          right: auto;
+          bottom: 20px;
+          z-index: 10050;
           border-radius: 999px;
           box-shadow: 0 8px 20px rgba(0,0,0,.18);
           font-weight: 600;
+        }
+        @media (max-width: 576px) {
+          .report-fab {
+            left: 16px;
+            bottom: 16px;
+          }
         }
         #myReportsList .report-item {
           border: 1px solid #e2e8f0;
