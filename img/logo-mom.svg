@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="100%" height="auto" aria-label="MOM Line Art Logo">
+  <!-- Optional Soft Ambient Background Halo -->
+  <circle cx="30" cy="30" r="26" fill="#5A4B62" fill-opacity="0.06"/>
+
+  <!-- Mother Head Dot (#5A4B62) -->
+  <circle cx="28" cy="14" r="5" fill="#5A4B62"/>
+
+  <!-- Mother Profile & Pregnancy Spine Curve (#5A4B62) -->
+  <path d="M 26 19 C 22 25, 20 34, 24 44 C 27 50, 35 52, 40 46 C 46 38, 42 28, 34 28 C 28 28, 25 32, 25 32" 
+        fill="none" 
+        stroke="#5A4B62" 
+        stroke-width="2.8" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+
+  <!-- Fetal Heart Core Accent (Warm Red #E54B4B) -->
+  <path d="M 34 35 C 34 35, 30 31, 30 28 C 30 26, 31.5 25, 33 25 C 34 25, 34.5 26, 34.5 26 C 34.5 26, 35 25, 36 25 C 37.5 25, 39 26, 39 28 C 39 31, 34 35, 34 35 Z" 
+        fill="#E54B4B"/>
+</svg>

@@ -130,7 +130,6 @@ if ($records) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="css/style.css">
-    <!-- <link rel="stylesheet" href="css/momStylePrevious.css"> -->
     <link rel="stylesheet" href="css/chatbot.css"> <!-- Chatbot CSS -->
     <link rel="stylesheet" href="css/messenger.css"> <!-- messenger CSS -->
     <link rel="stylesheet" href="css/connections.css">
@@ -141,26 +140,36 @@ if ($records) {
         const patientId = <?= json_encode($_SESSION["id"] ?? null) ?>;
     </script>
 
+    <!-- Ambient floating hearts — purely decorative, ignored by assistive tech -->
+    <div class="ambient-hearts" aria-hidden="true">
+        <span>♥</span>
+        <span>♥</span>
+        <span>♥</span>
+        <span>♥</span>
+        <span>♥</span>
+        <span>♥</span>
+    </div>
+
     <!-- Themed Preloader -->
     <div id="preloader">
         <div class="preloader-content">
-            <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="MOM Logo" class="preloader-logo">
+            <img src="img/logo-heart.svg" alt="MOM Logo" class="preloader-logo">
             <div class="ecg-line"></div>
-            <p class="loading-text">Monitoring vitals...</p>
+            <p class="loading-text">Getting things cozy for you and baby... 💕</p>
         </div>
     </div>
     <!-- Welcome Message -->
     <div id="welcomeMessage">
         <div class="welcome-content">
-            <h4>👩‍⚕️ Welcome, <?php echo htmlspecialchars($username); ?>!</h4>
-            <p>We're here to help you monitor your health and your baby's wellbeing. 💖</p>
+            <h4>🌸 Hi <?php echo htmlspecialchars($username); ?>, welcome back!</h4>
+            <p>You and your little one are doing great. Let's see how you're both feeling today. 💖</p>
         </div>
     </div>
 
     <nav class="navbar navbar-dark mb-4">
         <div class="container">
             <a class="navbar-brand fw-bold" href="ecg.php">
-                <img src="https://cdn-icons-png.flaticon.com/512/2785/2785544.png" alt="ECG Logo" class="logo-img">
+                <img src="img/logo-mom.svg" alt="ECG Logo" class="logo-img">
                 MOM - Maternal Observation and Monitoring Dashboard
             </a>
             <!-- Added logout button -->
@@ -171,11 +180,19 @@ if ($records) {
     </nav>
     <div class="container">
 
+        <!-- Thematic hero scene: a quiet moment under the moon -->
+        <div class="hero-banner">
+            <img src="img/hero-scene.svg" alt="" role="presentation">
+            <div class="hero-banner-caption">
+                <span class="hero-banner-eyebrow">Every heartbeat counts</span>
+                <p>A calm space to check in on you and your little one.</p>
+            </div>
+        </div>
 
         <div class="dashboard-header">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h1 class="dashboard-title">Patient Monitoring</h1>
+                    <h1 class="dashboard-title">Your Pregnancy Journey</h1>
                 </div>
                 <div class="col-md-6 text-end">
                     <span class="text-muted">Last updated: <span id="last-update">Just now</span></span>
@@ -184,10 +201,10 @@ if ($records) {
         </div>
 
         <div class="patient-info">
-            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135789.png" alt="Patient Avatar"
+            <img src="img/mom-avatar.svg" alt="Patient Avatar"
                 class="patient-avatar">
             <div class="patient-details">
-                <h4>Welcome, <?php echo htmlspecialchars($username); ?>!</h4>
+                <h4>Hi, <?php echo htmlspecialchars($username); ?> 🌷</h4>
                 <a href="#" class="messenger-icon" id="openMessenger">
                     <h4>Consult with the Doctor</h4>
                     <i class="bi bi-chat-dots"></i>

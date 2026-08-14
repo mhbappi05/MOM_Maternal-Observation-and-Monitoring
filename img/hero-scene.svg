@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" preserveAspectRatio="xMidYMax slice">
+  <style>
+    .hero-star {
+      animation: heroTwinkle 3.2s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    .hero-star:nth-child(2) { animation-delay: .5s; }
+    .hero-star:nth-child(3) { animation-delay: 1s; }
+    .hero-star:nth-child(4) { animation-delay: 1.4s; }
+    .hero-star:nth-child(5) { animation-delay: .3s; }
+    .hero-star:nth-child(6) { animation-delay: .9s; }
+    .hero-star:nth-child(7) { animation-delay: 1.7s; }
+    @keyframes heroTwinkle {
+      0%, 100% { opacity: 0.35; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    .hero-moon {
+      animation: heroFloat 6s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    @keyframes heroFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .hero-heart {
+      animation: heroHeartbeat 1.8s ease-in-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    @keyframes heroHeartbeat {
+      0%, 100% { transform: scale(1); }
+      20% { transform: scale(1.18); }
+      35% { transform: scale(0.96); }
+      50% { transform: scale(1.1); }
+    }
+
+    .pulse-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: heroPulseRing 2.4s ease-out infinite;
+      opacity: 0;
+    }
+    .pulse-ring-delay {
+      animation-delay: 1.2s;
+    }
+    @keyframes heroPulseRing {
+      0% { transform: scale(0.6); opacity: 0.55; }
+      100% { transform: scale(1.9); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-star, .hero-moon, .hero-heart, .pulse-ring {
+        animation: none !important;
+      }
+    }
+  </style>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F3E6F7"/>
+      <stop offset="55%" stop-color="#FFE3D6"/>
+      <stop offset="100%" stop-color="#FFF6EF"/>
+    </linearGradient>
+    <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C9B6E4"/>
+      <stop offset="100%" stop-color="#B79FD6"/>
+    </linearGradient>
+    <linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFC9AE"/>
+      <stop offset="100%" stop-color="#FFB295"/>
+    </linearGradient>
+    <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9AD3A0"/>
+      <stop offset="100%" stop-color="#7FC287"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="320" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#FFFFFF" opacity="0.9">
+    <circle class="hero-star" cx="120" cy="50" r="2.4"/>
+    <circle class="hero-star" cx="230" cy="90" r="1.8"/>
+    <circle class="hero-star" cx="180" cy="40" r="1.6"/>
+    <circle class="hero-star" cx="620" cy="35" r="2"/>
+    <circle class="hero-star" cx="700" cy="70" r="1.6"/>
+    <circle class="hero-star" cx="980" cy="55" r="1.8"/>
+    <circle class="hero-star" cx="1050" cy="90" r="2.2"/>
+  </g>
+
+  <!-- crescent moon -->
+  <g class="hero-moon">
+    <circle cx="1015" cy="70" r="34" fill="#FFF6EF"/>
+    <circle cx="1030" cy="60" r="30" fill="url(#sky)"/>
+  </g>
+
+  <!-- rolling hills, back to front -->
+  <path fill="url(#hillBack)" d="M0,220 C150,170 300,250 480,200 C660,150 820,230 1000,190 C1100,168 1160,190 1200,200 L1200,320 L0,320 Z"/>
+  <path fill="url(#hillMid)" d="M0,255 C180,210 340,275 520,240 C700,205 880,260 1060,230 C1130,218 1170,230 1200,240 L1200,320 L0,320 Z"/>
+  <path fill="url(#hillFront)" d="M0,290 C220,255 420,300 640,275 C860,250 1020,295 1200,275 L1200,320 L0,320 Z"/>
+
+  <!-- resting mother-to-be silhouette -->
+  <g transform="translate(150,178)">
+    <!-- Adjusted head positioning -->
+    <circle cx="0" cy="-15" r="13" fill="#5B3A56"/>
+    <circle cx="0" cy="-27" r="9" fill="#5B3A56"/>
+
+    <!-- Outer Body -->
+    <path d="M-32,64
+             C-32,30 -18,4 0,4
+             C18,4 32,30 32,64
+             C32,74 18,80 0,80
+             C-18,80 -32,74 -32,64 Z"
+          fill="#5B3A56"/>
+
+    <!-- Inner belly overlay -->
+    <path d="M-16,34
+             C-16,16 -8,4 0,4
+             C8,4 16,16 16,34
+             C16,48 8,58 0,58
+             C-8,58 -16,48 -16,34 Z"
+          fill="#FF8C69"/>
+
+    <!-- Lowered Heart & Pulse Rings (Shifted down into belly center) -->
+    <g transform="translate(0, 14)">
+      <path class="hero-heart" d="M0,10c-3.6-5-11.4-4.2-11.4,2.6 0,5.2 6.7,9.4 11.4,13.4 4.7-4 11.4-8.2 11.4-13.4C11.4,5.8,3.6,5,0,10z" fill="#FFF6EF"/>
+      <circle class="pulse-ring" cx="0" cy="16" r="14" fill="none" stroke="#FF8C69" stroke-width="1.6"/>
+      <circle class="pulse-ring pulse-ring-delay" cx="0" cy="16" r="14" fill="none" stroke="#FF8C69" stroke-width="1.6"/>
+    </g>
+  </g>
+</svg>

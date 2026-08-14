@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="avatarBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFE3D6"/>
+      <stop offset="100%" stop-color="#F1E6F8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="url(#avatarBg)"/>
+  <!-- hair bun -->
+  <circle cx="50" cy="26" r="7" fill="#5B3A56"/>
+  <!-- head -->
+  <circle cx="50" cy="34" r="10" fill="#5B3A56"/>
+  <!-- seated silhouette with belly -->
+  <path d="M33 78
+           C33 62 38 50 50 50
+           C62 50 67 62 67 78
+           C67 82 63 84 50 84
+           C37 84 33 82 33 78 Z"
+        fill="#5B3A56"/>
+  <!-- belly highlight -->
+  <path d="M42 66
+           C42 58 45 53 50 53
+           C55 53 58 58 58 66
+           C58 72 55 76 50 76
+           C45 76 42 72 42 66 Z"
+        fill="#FF8C69"/>
+  <!-- little heart on belly -->
+  <path d="M50 63.5c-1.4-2-4.6-1.7-4.6 1.1 0 2.1 2.7 3.8 4.6 5.4 1.9-1.6 4.6-3.3 4.6-5.4 0-2.8-3.2-3.1-4.6-1.1z" fill="#FFF6EF"/>
+</svg>
